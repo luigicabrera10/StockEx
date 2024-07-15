@@ -161,6 +161,7 @@ static mut STATE: Option<CustomStruct> = None;
 // Create a public State
 #[derive(Clone, Default)]
 pub struct CustomStruct {
+    pub owner: ActorId,  // Add owner field
     pub userOperations: HashMap<ActorId, Vec<Operation> >,
 }
 
@@ -174,6 +175,10 @@ impl CustomStruct {
         // To set id
         let operations_len = self.userOperations.len() as u128;
 
+        // Value
+        let transferred_value = msg::value();
+        msg::send(self.owner, (), transferred_value).expect("Failed to transfer coins to owner");
+
         // If the actor_id doesn't exist in userOperations, create a new entry with an empty vector
         let operations = self.userOperations.entry(actor_id).or_insert(Vec::new());
 
@@ -186,7 +191,8 @@ impl CustomStruct {
             // openDate: Utc::now().to_string(),
             openDate: "START DATE".to_string(),
             closeDate: String::new(),  // Empty string as it is not closed yet
-            investment: input.investment,
+            // investment: input.investment,
+            investment: transferred_value,
             // openPrice: 0.0,  // Initialize as needed
             // closedPrice: 0.0,  // Initialize as needed
             openPrice: 0,  // Initialize as needed
@@ -257,6 +263,7 @@ extern "C" fn init() {
     }
 
     let state = CustomStruct {
+        owner: config.owner,  // Initialize the owner field
         ..Default::default()
     };
 
