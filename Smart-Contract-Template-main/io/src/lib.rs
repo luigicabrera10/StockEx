@@ -152,6 +152,7 @@ impl Metadata for ProgramMetadata {
 pub struct InitStruct {
     // Example:
     pub ft_program_id: ActorId,
+    pub owner: ActorId,  // Add owner field
 }
 
 // 3. Create your own Actions
@@ -214,9 +215,10 @@ pub enum Errors {
 pub struct Operation {
     pub id: u128,
     pub tickerSymbol: String,
-    pub operationType: bool,
-    pub openDate: String,  // may change
-    pub closeDate: String, // may change
+    pub operationType: bool,    // 0 = BUY operation, 1 = SELL operation
+    pub operationState: bool,   // 0 = open, 1 = closed
+    pub openDate: String,       // may change
+    pub closeDate: String,      // may change
     pub investment: u128,
     pub openPrice: u128,
     pub closedPrice: u128,
@@ -229,8 +231,8 @@ pub struct Operation {
 #[scale_info(crate = gstd::scale_info)]
 pub enum Query {
     // All,
-    ActiveOperations,
-    ClosedOperations,    
+    ActiveOperations(ActorId),
+    ClosedOperations(ActorId),    
 }
 
 // 8. Create your State Query Replys

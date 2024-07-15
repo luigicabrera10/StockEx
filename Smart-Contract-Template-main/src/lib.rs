@@ -161,8 +161,7 @@ static mut STATE: Option<CustomStruct> = None;
 // Create a public State
 #[derive(Clone, Default)]
 pub struct CustomStruct {
-    pub activeOperations: HashMap<ActorId, Vec<(Operation)> >,
-    pub closedOperations: HashMap<ActorId, Vec<(Operation)> >,
+    pub userOperations: HashMap<ActorId, Vec<Operation> >,
 }
 
 // Create a implementation on State
@@ -172,14 +171,18 @@ impl CustomStruct {
         
         let actor_id = msg::source();
 
-        // If the actor_id doesn't exist in activeOperations, create a new entry with an empty vector
-        let operations = self.activeOperations.entry(actor_id).or_insert(Vec::new());
+        // To set id
+        let operations_len = self.userOperations.len() as u128;
+
+        // If the actor_id doesn't exist in userOperations, create a new entry with an empty vector
+        let operations = self.userOperations.entry(actor_id).or_insert(Vec::new());
 
         // Create a new operation with the provided input and an id of 0
         let new_operation = Operation {
-            id: 0,  // You may want to implement a proper ID generation logic
+            id: operations_len, // Use the precomputed length
             tickerSymbol: input.tickerSymbol,
             operationType: input.operationType,
+            operationState: false, // false = open, true = close
             // openDate: Utc::now().to_string(),
             openDate: "START DATE".to_string(),
             closeDate: String::new(),  // Empty string as it is not closed yet
@@ -200,48 +203,45 @@ impl CustomStruct {
     async fn finishOperation(&mut self, operation_id: u128) -> Result<Events, Errors> {
         let actor_id = msg::source();
     
-        // Check if the actor_id exists in activeOperations
-        if let Some(operations) = self.activeOperations.get_mut(&actor_id) {
+        // Check if the actor_id exists in userOperations
+        if let Some(operations) = self.userOperations.get_mut(&actor_id) {
             // Find the operation with the given operation_id
-            if let Some(index) = operations.iter().position(|op| op.id == operation_id) {
-                let operation = operations.remove(index);
-    
-                // Modify operation fields as needed, e.g., setting closeDate
-                let mut operation_cloned = operation.clone();
-                operation_cloned.closeDate = "CLOSED DATE".to_string();
-    
-                // Insert the operation into closedOperations
-                let closed_operations = self.closedOperations.entry(actor_id).or_insert(Vec::new());
-                closed_operations.push(operation_cloned);
-    
-                Ok(Events::OperationClosed)
+            if let Some(operation) = operations.iter_mut().find(|op| op.id == operation_id) {
+                // Check if the operation is still open
+                if !operation.operationState {
+                    // Set the operation state to closed and update the close date
+                    operation.operationState = true;
+                    operation.closeDate = "CLOSED DATE".to_string();
+                    return Ok(Events::OperationClosed);
+                } else {
+                    return Err(Errors::ClosingOperationError);
+                }
             } else {
-                Err(Errors::ClosingOperationError)
+                return Err(Errors::ClosingOperationError);
             }
         } else {
-            Err(Errors::ClosingOperationError)
+            return Err(Errors::ClosingOperationError);
         }
     }
 
     async fn closeAll(&mut self) -> Result<Events, Errors> {
         let actor_id = msg::source();
     
-        // Move all active operations to closed operations
-        if let Some(mut operations) = self.activeOperations.remove(&actor_id) {
-            let closed_operations = self.closedOperations.entry(actor_id).or_insert(Vec::new());
-    
-            for operation in operations.drain(..) {
-                // Modify operation fields as needed, e.g., setting closeDate
-                let mut cloned_operation = operation.clone();
-                cloned_operation.closeDate = "CLOSED DATE".to_string();
-                closed_operations.push(cloned_operation);
+        // Check if the actor_id exists in userOperations
+        if let Some(operations) = self.userOperations.get_mut(&actor_id) {
+            for operation in operations.iter_mut() {
+                // Check if the operation is still open
+                if !operation.operationState {
+                    // Set the operation state to closed and update the close date
+                    operation.operationState = true;
+                    operation.closeDate = "CLOSED DATE".to_string();
+                }
             }
-    
-            Ok(Events::AllOperationsClosed)
+            return Ok(Events::AllOperationsClosed);
         } else {
-            Err(Errors::ClosingOperationError)
+            return Err(Errors::ClosingOperationError);
         }
-    }
+    }    
 }
 
 
@@ -288,45 +288,36 @@ async fn main() {
 extern "C" fn state() {
     let state = unsafe { STATE.take().expect("Unexpected error in taking state") };
     let query: Query = msg::load().expect("Unable to decode the query");
+
     let reply = match query {
-        // Query::All => QueryReply::All(state.into()),
-        Query::ActiveOperations => { // read wallet return tag
-            let answer: Vec<Operation> = state.activeOperations
-                .get(&msg::source())
-                .cloned() // Clone the contents of Option<&Vec<Operation>> to Vec<Operation>
+
+        Query::ActiveOperations(actor_id) => {
+            let answer: Vec<Operation> = state.userOperations
+                .get(&actor_id)
+                .map(|operations| {
+                    operations.iter()
+                        .filter(|op| !op.operationState) // Only include open operations
+                        .cloned()
+                        .collect()
+                })
                 .unwrap_or_else(|| Vec::new()); // Handle None case if necessary
             QueryReply::ActiveOperations(answer)
         },
-        Query::ClosedOperations => { // read wallet return tag
-            let answer: Vec<Operation> = state.closedOperations
-                .get(&msg::source())
-                .cloned() // Clone the contents of Option<&Vec<Operation>> to Vec<Operation>
+
+        Query::ClosedOperations(actor_id) => {
+            let answer: Vec<Operation> = state.userOperations
+                .get(&actor_id)
+                .map(|operations| {
+                    operations.iter()
+                        .filter(|op| op.operationState) // Only include closed operations
+                        .cloned()
+                        .collect()
+                })
                 .unwrap_or_else(|| Vec::new()); // Handle None case if necessary
             QueryReply::ClosedOperations(answer)
         },
+        
     };
 
-    msg::reply(reply, 0).expect("Error on sharinf state");
+    msg::reply(reply, 0).expect("Error on sharing state");
 }
-
-// Implementation of the From trait for converting CustomStruct to IoCustomStruct
-// impl From<CustomStruct> for AllOperationsQuery {
-//     // Conversion method
-//     fn from(value: CustomStruct) -> Self {
-//         // Destructure the CustomStruct object into its individual fields
-//         let CustomStruct {
-//             activeOperations,
-//             closedOperations,
-//         } = value;
-
-//         // Perform some transformation, cloning its elements
-//         let activeOperations = activeOperations.into_iter().collect();
-//         let closedOperations = closedOperations.into_iter().collect();
-
-//         // Create a new IoCustomStruct object using the destructured fields
-//         Self {
-//             activeOperations,
-//             closedOperations,
-//         }
-//     }
-// }
