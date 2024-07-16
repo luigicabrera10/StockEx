@@ -4,11 +4,6 @@ use gmeta::{In, InOut, Metadata};
 use gstd::{prelude::*, ActorId};
 // use chrono::{DateTime, Utc};
 
-// use decimal::d128;
-// use decimal::Decimal;
-
-// use rust_decimal::Decimal;
-// use rust_decimal_macros::dec;
 
 pub struct ProgramMetadata;
 
@@ -27,8 +22,6 @@ impl Metadata for ProgramMetadata {
 #[codec(crate = gstd::codec)]
 #[scale_info(crate = gstd::scale_info)]
 pub struct InitStruct {
-    // Example:
-    pub ft_program_id: ActorId,
     pub owner: ActorId,  // Add owner field
 }
 

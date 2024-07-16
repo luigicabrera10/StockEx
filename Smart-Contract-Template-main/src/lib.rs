@@ -9,18 +9,16 @@ static mut STATE: Option<CustomStruct> = None;
 #[derive(Clone, Default)]
 pub struct CustomStruct {
     pub owner: ActorId,  // Add owner field
+    pub id_number: u128,
     pub userOperations: HashMap<ActorId, Vec<Operation> >,
 }
 
 // Create a implementation on State
 impl CustomStruct {
 
-    async fn newOperation(&mut self, input: OpenOperationInput) -> Result<Events, Errors> {
+    fn newOperation(&mut self, input: OpenOperationInput) -> Result<Events, Errors> {
         
         let actor_id = msg::source();
-
-        // To set id
-        let operations_len = self.userOperations.len() as u128;
 
         // Value
         let transferred_value = msg::value();
@@ -31,7 +29,7 @@ impl CustomStruct {
 
         // Create a new operation with the provided input and an id of 0
         let new_operation = Operation {
-            id: operations_len, // Use the precomputed length
+            id: self.id_number, // Use the precomputed length
             tickerSymbol: input.tickerSymbol,
             operationType: input.operationType,
             operationState: false, // false = open, true = close
@@ -46,6 +44,8 @@ impl CustomStruct {
             closedPrice: 0,  // Initialize as needed
         };
 
+        self.id_number = self.id_number+1;
+
         // Push the new operation to the vector of operations
         operations.push(new_operation);
 
@@ -53,7 +53,7 @@ impl CustomStruct {
 
     }
 
-    async fn finishOperation(&mut self, operation_id: u128) -> Result<Events, Errors> {
+    fn finishOperation(&mut self, operation_id: u128) -> Result<Events, Errors> {
         let actor_id = msg::source();
     
         // Check if the actor_id exists in userOperations
@@ -77,7 +77,7 @@ impl CustomStruct {
         }
     }
 
-    async fn closeAll(&mut self) -> Result<Events, Errors> {
+    fn closeAll(&mut self) -> Result<Events, Errors> {
         let actor_id = msg::source();
     
         // Check if the actor_id exists in userOperations
@@ -105,12 +105,13 @@ impl CustomStruct {
 extern "C" fn init() {
     let config: InitStruct = msg::load().expect("Unable to decode InitStruct");
 
-    if config.ft_program_id.is_zero() {
-        panic!("InitStruct program address can't be 0");
-    }
+    // if config.ft_program_id.is_zero() {
+    //     panic!("InitStruct program address can't be 0");
+    // }
 
     let state = CustomStruct {
         owner: config.owner,  // Initialize the owner field
+        id_number: 0,
         ..Default::default()
     };
 
@@ -129,9 +130,9 @@ async fn main() {
     // We receive an action from the user and update the state. Example:
     let reply = match action {
 
-        Actions::OpenOperation(input) => state.newOperation(input).await, // Here, we call the implementation
-        Actions::CloseOperation(input) => state.finishOperation(input).await, // Here, we call the implementation
-        Actions::CloseAllOperations => state.closeAll().await, // Here, we call the implementation
+        Actions::OpenOperation(input) => state.newOperation(input), // Here, we call the implementation
+        Actions::CloseOperation(input) => state.finishOperation(input), // Here, we call the implementation
+        Actions::CloseAllOperations => state.closeAll(), // Here, we call the implementation
 
     };
     msg::reply(reply, 0).expect("Error in sending a reply");
