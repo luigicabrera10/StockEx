@@ -8,7 +8,7 @@ const { hexToU8a, u8aToString } = require('@polkadot/util');
 const networkAddress = 'wss://testnet.vara.network';
 const ownerPassphraseFile = './passphrase.txt';
 const ownerId = '0x40a97e339df94ef78238b112a352b7f46b4c8473dd972b7b8d343c64e408a76f';
-const myContractId = '0xd531861364612d81e1f9e423b7e81c2ef91278af6b0ae4027427fe5e9996e430';
+const myContractId = '0xba222542dcba116c038a0f7a71e71dcbde0f316af3b3edf5d8be930abb0ce270';
 
 // Globals
 let gearApi;
@@ -81,10 +81,7 @@ async function sendReply(messageId) {
    try {
       const reply = {
          replyToId: messageId,
-         payload: {
-            "prices": 253000,
-            "marketState": 1
-         },
+         payload: "{ \"prices\": \"253000\", \"marketState\": \"1\" }",
          gasLimit: 100000000000, // 0.1 Vara
          value: 0,
       };
@@ -108,6 +105,7 @@ async function handleMessage(id, source, destination, payload, value, reply) {
       Source: ${source.toHex()}
       Destination: ${destination.toHex()}
       Payload: ${payload.toHex()}  
+      Payload: ${payload}  
       Value: ${value}
       Reply: ${reply}
    `;
@@ -124,6 +122,14 @@ async function handleMessage(id, source, destination, payload, value, reply) {
    } catch (error) {
       console.warn('Payload is not valid JSON:', decodedPayload);
       parsedPayload = decodedPayload;
+   }
+
+   let seconTry;
+   try{
+      seconTry = hexToString(payload.toHex());
+      console.log("Second Try: ", seconTry);
+   } catch (error) {
+      console.warn('seconTry failed', seconTry);
    }
 
    if (source.toHex() === myContractId && destination.toHex() === ownerId) {

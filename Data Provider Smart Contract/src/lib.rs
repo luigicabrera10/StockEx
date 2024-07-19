@@ -79,7 +79,7 @@ impl ProviderStruct {
         Ok(Events::SuccessfulStateRequest { market_state: self.market_state } )
     }
 
-    async fn request_single_price(&mut self, first_symbol: String, second_symbol: String) -> Result<Events, Errors> {
+    async fn request_single_price(&mut self, request_query: InputSingleStockPrice) -> Result<Events, Errors> {
         // Message Data
         let actor_id = msg::source();
         let transferred_value = msg::value();
@@ -89,39 +89,25 @@ impl ProviderStruct {
             return Err(Errors::InsufficientFundsAttached);
         }
 
-        // let json_data = format!("{{\"firstSymbol\": \"{}\", \"secondSymbol\": \"{}\"}}", first_symbol, second_symbol);
-        let json_data = format!(
-            r#"{{"firstSymbol":"{}","secondSymbol":"{}"}}"#,
-            first_symbol, second_symbol
-        );
-
-        
-        // Send Query and obtain the future
-        let send_future_result = msg::send_for_reply_as(
+        // Send the message and await the reply
+        let future = msg::send_for_reply_as::<InputSingleStockPrice, ReplySingleStockPrice>(
             self.owner,
-            &json_data,
+            request_query,
             0,
-            10000000000,
-        ).map_err(|_| Errors::ServiceUnavalible)?;
+            100000000,
+        )
+        .expect("Unable to send message");
+    
+        let reply: ReplySingleStockPrice = future.await.expect("Unable to receive reply");
 
-        // Await the future
-        let reply = send_future_result.await.map_err(|_| Errors::ServiceUnavalible)?;
-
-        let reply_str: String = reply;
-
-        // Manually parse the response
-        let price_start = reply_str.find("\"price\":").ok_or(Errors::InvalidResponse)? + 8;
-        let price_end = reply_str[price_start..].find(',').ok_or(Errors::InvalidResponse)? + price_start;
-        let price = reply_str[price_start..price_end].trim().parse::<u128>().map_err(|_| Errors::InvalidResponse)?;
-
-        let market_state_start = reply_str.find("\"marketState\":").ok_or(Errors::InvalidResponse)? + 14;
-        let market_state = reply_str[market_state_start..].trim() == "true";
-
-        self.market_state = market_state;
+        msg::reply(
+            reply,
+            0,
+        )
 
         Ok(Events::SuccessfulSinglePriceRequest {
-            market_state: self.market_state,
-            price,
+            market_state: reply.market_state,
+            price: reply.symbol,
         })
     }
 
@@ -312,7 +298,7 @@ async fn main() {
 
         // Public Actions
         Actions::requestMarketState => state.request_market_state(),
-        Actions::requestSinglePrice(input1, input2) => state.request_single_price(input1, input2).await,
+        Actions::requestSinglePrice(input) => state.request_single_price(input).await,
         Actions::requestMultiplePrices(input) => state.request_multiple_prices(input).await,
         Actions::requestExtraFundsReturn => state.request_refund(),
 

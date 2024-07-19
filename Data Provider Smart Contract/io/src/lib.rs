@@ -24,6 +24,25 @@ pub struct InitStruct {
     pub fees: u128,
 }
 
+// Custom input Structure for receive Single Price Request
+#[derive(Debug, Decode, Encode,  Clone, TypeInfo)]
+#[codec(crate = gstd::codec)]
+#[scale_info(crate = gstd::scale_info)]
+pub struct InputSingleStockPrice {
+    pub symbol: String,
+    pub currency: String,
+}
+
+// Custom output Structure for reply Single Price Request
+#[derive(Debug, Decode, Encode,  Clone, TypeInfo)]
+#[codec(crate = gstd::codec)]
+#[scale_info(crate = gstd::scale_info)]
+pub struct ReplySingleStockPrice {
+    pub market_state: bool,
+    pub symbol: u128,
+}
+
+
 // 3. Create your own Actions
 #[derive(Debug, Decode, Encode, TypeInfo)]
 #[codec(crate = gstd::codec)]
@@ -31,7 +50,7 @@ pub struct InitStruct {
 pub enum Actions {
     // Add Public Actions
     requestMarketState,                              // Query if market is open
-    requestSinglePrice(String, String),              // Query as single price
+    requestSinglePrice(InputSingleStockPrice),              // Query as single price
     requestMultiplePrices(Vec<(String, String)>), // Query multiple prices
     requestExtraFundsReturn,
 
