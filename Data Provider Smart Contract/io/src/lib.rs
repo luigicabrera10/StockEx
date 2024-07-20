@@ -39,7 +39,37 @@ pub struct InputSingleStockPrice {
 #[scale_info(crate = gstd::scale_info)]
 pub struct ReplySingleStockPrice {
     pub market_state: bool,
-    pub symbol: u128,
+    pub price: u128,
+}
+
+
+// Custom input Structure for receive Single Price Request
+#[derive(Debug, Decode, Encode,  Clone, TypeInfo)]
+#[codec(crate = gstd::codec)]
+#[scale_info(crate = gstd::scale_info)]
+pub struct InputMultipleStockPrice {
+    pub symbols_pairs: Vec<(String, String)>,
+}
+
+// Custom output Structure for reply Single Price Request
+#[derive(Debug, Decode, Encode,  Clone, TypeInfo)]
+#[codec(crate = gstd::codec)]
+#[scale_info(crate = gstd::scale_info)]
+pub struct ReplyMultipleStockPrice {
+    pub market_state: bool,
+    pub prices: Vec<u128>,
+}
+
+
+#[derive(Encode, Decode, TypeInfo, Debug, PartialEq, Eq)]
+pub enum RequestDataProvider {
+    RequestSingleStockPrice {
+        symbol: String,
+        currency: String,
+    },
+    RequestMultipleStockPrice {
+        symbols_pairs: Vec<(String, String)>,
+    },
 }
 
 
@@ -49,18 +79,18 @@ pub struct ReplySingleStockPrice {
 #[scale_info(crate = gstd::scale_info)]
 pub enum Actions {
     // Add Public Actions
-    requestMarketState,                              // Query if market is open
-    requestSinglePrice(InputSingleStockPrice),              // Query as single price
-    requestMultiplePrices(Vec<(String, String)>), // Query multiple prices
-    requestExtraFundsReturn,
+    RequestMarketState,                              // Query if market is open
+    RequestSinglePrice(InputSingleStockPrice),              // Query as single price
+    RequestMultiplePrices(InputMultipleStockPrice), // Query multiple prices
+    RequestExtraFundsReturn,
 
     // Owner Actions
-    setMarketState(bool),                            // Set if the market is open
-    setFees(u128),                                   // Set how much should pay per request
-    setAuthorizedId(ActorId),                        // Set ids that dont need to pay fees (Privileged apps/users)
-    deleteAuthorizedId(ActorId),                     // Delete ids to pay fees 
-    depositFoundsToOwner,                            // Deposit collected funds to the owner         
-    setNewOwner(ActorId),                                     // Change the owner
+    SetMarketState(bool),                            // Set if the market is open
+    SetFees(u128),                                   // Set how much should pay per request
+    SetAuthorizedId(ActorId),                        // Set ids that dont need to pay fees (Privileged apps/users)
+    DeleteAuthorizedId(ActorId),                     // Delete ids to pay fees 
+    DepositFoundsToOwner,                            // Deposit collected funds to the owner         
+    SetNewOwner(ActorId),                                     // Change the owner
 }
 
 // 4. Create your own Events
@@ -94,12 +124,12 @@ pub enum Errors {
     TickerSymbolNotFound,       // Ticker Symbol not avalible
     InsufficientFundsAttached,  // Requesting data requires funds
     UnauthorizedAction,         // Only Owner can do some actions
-    ServiceUnavalible,          // Cany connect with the provider
-    MissingPrice,
-    MissingMarketState,
-    InvalidResponse,
+    //ServiceUnavalible,          // Cany connect with the provider
+    UnableToSendMessageToService,
+    UnableToReply,
     NotExtraFundsWhereFound,
     IdNotFound,
+    UnableToDecodeReply,
 }
 
 // 7. Create your State Querys

@@ -1,3 +1,5 @@
 nodejs_server/passphrase.txt
+nodejs_server/stockApiKey.txt
+nodejs_server/currencyApiKey.txt
 nodejs_server/testing.js
 nodejs_server/node_modules/

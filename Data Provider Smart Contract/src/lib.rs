@@ -1,6 +1,8 @@
 #![no_std]
 use gstd::{async_main, collections::HashMap, msg, prelude::*, ActorId};
 use io::*;
+// use parity_scale_codec::{Decode, Encode};
+
 // use serde_json::Value;
 // use serde_json::json;
 // use serde_json;
@@ -76,11 +78,62 @@ impl ProviderStruct {
             return Err(Errors::InsufficientFundsAttached);
         }
 
+        msg::reply(
+            self.market_state,
+            0,
+        )
+        .map_err(|_| Errors::UnableToReply)?;
+
         Ok(Events::SuccessfulStateRequest { market_state: self.market_state } )
     }
 
+    /*
     async fn request_single_price(&mut self, request_query: InputSingleStockPrice) -> Result<Events, Errors> {
         // Message Data
+        let actor_id = msg::source();
+        let transferred_value = msg::value();
+
+        // Handle the transfer of funds
+        if self.handle_transfer_funds(actor_id, transferred_value, self.fees_per_query * 2).is_err() {
+            return Err(Errors::InsufficientFundsAttached)
+        }
+
+        // Encode the payload
+        let encoded_request = RequestDataProvider::RequestSingleStockPrice {
+            symbol: request_query.symbol.clone(),
+            currency: request_query.currency.clone(),
+        }.encode();
+
+        // Send the message and await the reply
+        let future = msg::send_for_reply_as::<Vec<u8>, ReplySingleStockPrice>(
+            self.owner,
+            //request_query.clone(),
+            encoded_request,
+            0,
+            100000000,
+        )
+        .map_err(|_| Errors::UnableToSendMessageToService)?;
+    
+        let reply: ReplySingleStockPrice = future.await.expect("Unable to receive reply");
+
+        msg::reply(
+            reply.clone(),
+            0,
+        )
+        .map_err(|_| Errors::UnableToReply)?;
+
+
+        self.market_state = reply.market_state;
+
+        Ok(Events::SuccessfulSinglePriceRequest {
+            market_state: self.market_state,
+            price: reply.price,
+        })
+
+    }*/
+
+    // Manually create JSON for SingleStockPriceRequest
+    async fn request_single_price(&mut self, request_query: InputSingleStockPrice) -> Result<Events, Errors> {
         let actor_id = msg::source();
         let transferred_value = msg::value();
 
@@ -89,74 +142,137 @@ impl ProviderStruct {
             return Err(Errors::InsufficientFundsAttached);
         }
 
+        // Create JSON string for the request
+        let request_payload = format!(
+            r#"{{"SingleStockPrice": {{"symbol": "{}", "currency": "{}"}}}}"#,
+            request_query.symbol,
+            request_query.currency
+        );
+
         // Send the message and await the reply
-        let future = msg::send_for_reply_as::<InputSingleStockPrice, ReplySingleStockPrice>(
+        let future = msg::send_for_reply_as::<String, String>(
             self.owner,
-            request_query,
+            request_payload,
             0,
             100000000,
-        )
-        .expect("Unable to send message");
-    
-        let reply: ReplySingleStockPrice = future.await.expect("Unable to receive reply");
+        ).map_err(|_| Errors::UnableToSendMessageToService)?;
 
-        msg::reply(
-            reply,
-            0,
-        )
+        let reply: String = future.await.expect("Unable to receive reply");
+
+        // Manually decode JSON string for the reply
+        let market_state = reply.contains("\"marketState\": 1");
+        let price_start = reply.find("\"price\": ").ok_or(Errors::UnableToDecodeReply)? + 9;
+        let price_end = reply[price_start..].find('}').unwrap_or(reply.len());
+        let stock_price: u128 = reply[price_start..price_end].parse().map_err(|_| Errors::UnableToDecodeReply)?;
+
+        // Reply to the message
+        msg::reply(ReplySingleStockPrice{
+            market_state: market_state.clone(),
+            price: stock_price.clone(),
+        }, 0).map_err(|_| Errors::UnableToReply)?;
+
+        self.market_state = market_state;
 
         Ok(Events::SuccessfulSinglePriceRequest {
-            market_state: reply.market_state,
-            price: reply.symbol,
+            market_state: self.market_state.clone(),
+            price: stock_price.clone(),
         })
     }
 
-    async fn request_multiple_prices(&mut self, symbol_pairs: Vec<(String, String)>) -> Result<Events, Errors> {
+    /*
+    async fn request_multiple_prices(&mut self, request_query: InputMultipleStockPrice) -> Result<Events, Errors> {
         // Message Data
         let actor_id = msg::source();
         let transferred_value = msg::value();
 
-        let cost_size = symbol_pairs.len() as u128;
+        let cost_size = request_query.symbols_pairs.len() as u128;
+
+        // Handle the transfer of funds
+        if self.handle_transfer_funds(actor_id, transferred_value, self.fees_per_query * (cost_size + 1)).is_err() {
+            return Err(Errors::InsufficientFundsAttached)
+        }
+
+        // Send the message and await the reply
+        let future = msg::send_for_reply_as::<RequestDataProvider, ReplyMultipleStockPrice>(
+            self.owner,
+            //request_query.clone(),
+            RequestDataProvider::RequestMultipleStockPrice{
+                symbols_pairs: request_query.symbols_pairs.clone(),
+            },
+            0,
+            100000000,
+        )
+        .map_err(|_| Errors::UnableToSendMessageToService)?;
+    
+        let reply: ReplyMultipleStockPrice = future.await.expect("Unable to receive reply");
+
+        msg::reply(
+            reply.clone(),
+            0,
+        )
+        .map_err(|_| Errors::UnableToReply)?;
+
+        self.market_state = reply.market_state;
+
+        Ok(Events::SuccessfulMultiplePriceRequest {
+            market_state: self.market_state,
+            prices: reply.prices,
+        })
+
+    }*/
+
+    // Manually create JSON for MultipleStockPriceRequest
+    async fn request_multiple_prices(&mut self, request_query: InputMultipleStockPrice) -> Result<Events, Errors> {
+        
+        let actor_id = msg::source();
+        let transferred_value = msg::value();
+
+        let cost_size = request_query.symbols_pairs.len() as u128;
 
         // Handle the transfer of funds
         if self.handle_transfer_funds(actor_id, transferred_value, self.fees_per_query * (cost_size + 1)).is_err() {
             return Err(Errors::InsufficientFundsAttached);
         }
 
-        let json_data = format!("{{ \"symbolPairs\": {:?} }}", symbol_pairs);
+        // Create JSON string for the request
+        let symbols_pairs_str: Vec<String> = request_query.symbols_pairs.iter()
+            .map(|(symbol, currency)| format!(r#"["{}", "{}"]"#, symbol, currency))
+            .collect();
+        let request_payload = format!(
+            r#"{{"MultipleStockPrice": [{}]}}"#,
+            symbols_pairs_str.join(", ")
+        );
 
-        // Send Query and obtain the future
-        let send_future_result = msg::send_for_reply_as(
+        // Send the message and await the reply
+        let future = msg::send_for_reply_as::<String, String>(
             self.owner,
-            &json_data,
+            request_payload,
             0,
-            10000000000,
-        ).map_err(|_| Errors::ServiceUnavalible)?;
+            100000000,
+        ).map_err(|_| Errors::UnableToSendMessageToService)?;
 
-        // Await the future
-        let reply = send_future_result.await.map_err(|_| Errors::ServiceUnavalible)?;
+        let reply: String = future.await.expect("Unable to receive reply");
 
-        let reply_str: String = reply;
+        // Manually decode JSON string for the reply
+        let market_state = reply.contains("\"marketState\": 1");
+        let prices_start = reply.find("\"prices\": [").ok_or(Errors::UnableToDecodeReply)? + 11;
+        let prices_end = reply.find(']').ok_or(Errors::UnableToDecodeReply)?;
+        let prices_str = &reply[prices_start..prices_end];
+        let stock_prices: Vec<u128> = prices_str.split(',')
+            .map(|s| s.trim().parse().map_err(|_| Errors::UnableToDecodeReply))
+            .collect::<Result<_, _>>()?;
 
-        // Manually parse the response
-        let prices_start = reply_str.find("\"prices\":[").ok_or(Errors::InvalidResponse)? + 10;
-        let prices_end = reply_str[prices_start..].find(']').ok_or(Errors::InvalidResponse)? + prices_start;
-        let prices_str = &reply_str[prices_start..prices_end];
-
-        let prices: Vec<u128> = prices_str
-            .split(',')
-            .map(|s| s.trim().parse::<u128>())
-            .collect::<Result<Vec<_>, _>>()
-            .map_err(|_| Errors::InvalidResponse)?;
-
-        let market_state_start = reply_str.find("\"marketState\":").ok_or(Errors::InvalidResponse)? + 14;
-        let market_state = reply_str[market_state_start..].trim() == "true";
+        // Reply to the message
+        msg::reply(ReplyMultipleStockPrice{
+            market_state: market_state.clone(),
+            prices: stock_prices.clone(),
+        }, 0).map_err(|_| Errors::UnableToReply)?;
 
         self.market_state = market_state;
 
         Ok(Events::SuccessfulMultiplePriceRequest {
-            market_state: self.market_state,
-            prices,
+            market_state: self.market_state.clone(),
+            prices: stock_prices.clone(),
         })
     }
 
@@ -297,18 +413,18 @@ async fn main() {
     let reply = match action {
 
         // Public Actions
-        Actions::requestMarketState => state.request_market_state(),
-        Actions::requestSinglePrice(input) => state.request_single_price(input).await,
-        Actions::requestMultiplePrices(input) => state.request_multiple_prices(input).await,
-        Actions::requestExtraFundsReturn => state.request_refund(),
+        Actions::RequestMarketState => state.request_market_state(),
+        Actions::RequestSinglePrice(input) => state.request_single_price(input).await,
+        Actions::RequestMultiplePrices(input) => state.request_multiple_prices(input).await,
+        Actions::RequestExtraFundsReturn => state.request_refund(),
 
         // Owner actions
-        Actions::setMarketState(input) => state.set_market_state(input),
-        Actions::setFees(input) => state.set_fees(input),
-        Actions::setAuthorizedId(input) => state.set_authorized_id(input),
-        Actions::deleteAuthorizedId(input) => state.delete_authorized_id(input),
-        Actions::depositFoundsToOwner => state.deposit_funds_to_owner(),
-        Actions::setNewOwner(input) => state.set_new_owner(input),
+        Actions::SetMarketState(input) => state.set_market_state(input),
+        Actions::SetFees(input) => state.set_fees(input),
+        Actions::SetAuthorizedId(input) => state.set_authorized_id(input),
+        Actions::DeleteAuthorizedId(input) => state.delete_authorized_id(input),
+        Actions::DepositFoundsToOwner => state.deposit_funds_to_owner(),
+        Actions::SetNewOwner(input) => state.set_new_owner(input),
 
     };
     msg::reply(reply, 0).expect("Error in sending a reply");
