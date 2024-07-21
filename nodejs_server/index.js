@@ -99,10 +99,18 @@ async function sendReply(messageId, request, testingExample = 0) {
          replyPayload = '{ "error": "Not valid json"}';
       }
 
+      // Stringify the reply payload
+      const replyPayloadString = JSON.stringify(replyPayload);
+
+      // Convert the reply payload to a hex string
+      // const payloadHex = Buffer.from(replyPayloadString).toString('hex');
+      const payloadHex = replyPayloadString;
+
       // Prepare the reply object
       const reply = {
          replyToId: messageId,
-         payload: replyPayload,
+         // payload: replyPayload,
+         payload: payloadHex,
          gasLimit: 100000000000, // 0.1 Vara
          value: 0,
       };
@@ -135,6 +143,7 @@ async function handleMessage(id, source, destination, payload, value, reply) {
 
    if (!(source.toHex() === myContractId && destination.toHex() === ownerId)) {
       console.log("Another Message that I don't have to answer:");
+      console.log(messageData);
       return;
    } 
 
