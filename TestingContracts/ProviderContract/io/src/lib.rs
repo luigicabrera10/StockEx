@@ -10,7 +10,7 @@ pub struct ProgramMetadata;
 // 1. Define actions, events, errors and state for your metadata.
 impl Metadata for ProgramMetadata {
     type Init = In<InitStruct>;
-    type Handle = InOut<ProviderActions, Result<Events, Errors>>;
+    type Handle = InOut<ProviderActions, Result<ProviderEvents, ProviderErrors>>;
     type Others = ();
     type Reply = ();
     type Signal = ();
@@ -56,14 +56,33 @@ pub struct UserRequestInput {
 
 
 // 4. Create your own Events
+// #[derive(Debug, Decode, Encode, TypeInfo)]
+// #[codec(crate = gstd::codec)]
+// #[scale_info(crate = gstd::scale_info)]
+// pub enum ProviderEvents {
+//     DataProvidedSuccessfully,
+//     SetContractIdSuccessfully,
+//     RandomActionEvent,
+//     SingleReply {
+//         market_state: bool,
+//         prices: Vec<u128>,
+//     },
+// }
+
 #[derive(Debug, Decode, Encode, TypeInfo)]
 #[codec(crate = gstd::codec)]
 #[scale_info(crate = gstd::scale_info)]
-pub enum Events {
-    // Add Events(Example)
-    DataProvidedSuccessfully,   // Example an event with a simple input
-    SetContractIdSuccessfully,   // Example an event with a simple input
-    RandomActionEvent,   // Example an event with a simple input
+pub enum ProviderEvents {
+    DataProvidedSuccessfully,
+    SetContractIdSuccessfully,
+    RandomActionEvent,
+    AdditionalEvent{
+        xample: bool,
+    },
+    SingleReply {
+        market_state: bool,
+        prices: Vec<u128>,
+    },
 }
 
 #[derive(Debug, Decode, Encode, TypeInfo)]
@@ -78,11 +97,21 @@ pub enum ContractDataOutput {
 
 
 // 5. Create your own Errors
+// #[derive(Debug, Decode, Encode, TypeInfo)]
+// #[codec(crate = gstd::codec)]
+// #[scale_info(crate = gstd::scale_info)]
+// pub enum ProviderErrors {
+//     // Add errors(Example)
+//     SendingMessageError,
+//     ReceiveMessageError,
+//     UnexpectedReply,
+// }
+
+
 #[derive(Debug, Decode, Encode, TypeInfo)]
 #[codec(crate = gstd::codec)]
 #[scale_info(crate = gstd::scale_info)]
-pub enum Errors {
-    // Add errors(Example)
+pub enum ProviderErrors {
     SendingMessageError,
     ReceiveMessageError,
     UnexpectedReply,
@@ -104,4 +133,12 @@ pub enum Query {
 pub enum QueryReply {
     LastTicker1(String),
     LastTicker2(String),
+}
+
+
+pub enum ExtraEnum {  
+    RandomEnum {
+        market_state: u128,
+        prices: bool,
+    } 
 }
