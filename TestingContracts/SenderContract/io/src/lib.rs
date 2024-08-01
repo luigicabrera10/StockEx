@@ -41,17 +41,33 @@ pub enum Actions {
 #[codec(crate = gstd::codec)]
 #[scale_info(crate = gstd::scale_info)]
 pub struct UserRequestInput {
-   pub ticker_symbol1: String, // Like TSL, FB, MSFT
-   pub ticker_symbol2: String, // Like TSL, FB, MSFT
+    pub ticker_symbol1: String, // Like TSL, FB, MSFT
+    pub ticker_symbol2: String, // Like TSL, FB, MSFT
 }
 
 
 #[derive(Debug, Encode, Decode, TypeInfo)]
+#[codec(crate = gstd::codec)]
+#[scale_info(crate = gstd::scale_info)]
 pub enum ProviderActions {
     ProvideData(UserRequestInput),
 }
 
-
+#[derive(Debug, Decode, Encode, TypeInfo)]
+#[codec(crate = gstd::codec)]
+#[scale_info(crate = gstd::scale_info)]
+pub enum ProviderEvents {
+    DataProvidedSuccessfully,
+    SetContractIdSuccessfully,
+    RandomActionEvent,
+    AdditionalEvent{
+        xample: bool,
+    },
+    SingleReply {
+        market_state: bool,
+        prices: Vec<u128>,
+    },
+}
 
 // 4. Create your own Events
 #[derive(Debug, Decode, Encode, TypeInfo)]
@@ -77,8 +93,8 @@ pub enum ContractDataOutput {
 #[codec(crate = gstd::codec)]
 #[scale_info(crate = gstd::scale_info)]
 pub struct ContractSingleReply {
-   pub market_state: bool,
-   pub prices: Vec<u128>, // Like TSL, FB, MSFT
+    pub market_state: bool,
+    pub prices: Vec<u128>, // Like TSL, FB, MSFT
 }
 
 
@@ -88,6 +104,18 @@ pub struct ContractSingleReply {
 #[scale_info(crate = gstd::scale_info)]
 pub enum Errors {
     // Add errors(Example)
+    SendingMessageError,
+    ReceiveMessageError,
+    UnexpectedReply,
+    ProviderError,
+    SendError,
+}
+
+
+#[derive(Debug, Decode, Encode, TypeInfo)]
+#[codec(crate = gstd::codec)]
+#[scale_info(crate = gstd::scale_info)]
+pub enum ProviderErrors {
     SendingMessageError,
     ReceiveMessageError,
     UnexpectedReply,

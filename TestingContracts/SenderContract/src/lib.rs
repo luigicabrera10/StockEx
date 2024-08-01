@@ -18,18 +18,17 @@ pub struct CustomStruct {
 
 // Implement methods for the contract state
 impl CustomStruct {
-    fn set_contract_id(&mut self, input: ActorId) -> Result<Events, Errors> {
+    pub fn set_contract_id(&mut self, input: ActorId) -> Result<Events, Errors> {
         self.contract = input;
         Ok(Events::SetContractIdSuccessfully)
     }
 
-    async fn request_data(&mut self, input: UserRequestInput) -> Result<Events, Errors> {
-        
+    pub async fn request_data(&mut self, input: UserRequestInput) -> Result<Events, Errors> {
+   
         self.last_ticker1 = input.ticker_symbol1.clone();
         self.last_ticker2 = input.ticker_symbol2.clone();
-
-        // Send a request to the provider contract and await a reply
-        let reply = msg::send_for_reply_as::<_, ContractSingleReply>(
+    
+        let reply = msg::send_for_reply_as::<_, Result<ProviderEvents, ProviderErrors>>(
             self.contract,
             ProviderActions::ProvideData(input),
             0,
@@ -37,16 +36,16 @@ impl CustomStruct {
         )
         .expect("Error in sending a message")
         .await;
-        // .expect("Failed to receive a reply");
-
-        // Handle the reply from the provider contract
+    
         match reply {
-            Ok(ContractSingleReply{ market_state, prices }) => {
+            Ok(Ok(ProviderEvents::SingleReply { market_state, prices })) => {
                 self.market_state = market_state.clone();
                 self.prices = prices.clone();
                 Ok(Events::DataProvidedSuccessfully)
             }
-            Err(_) => Err(Errors::UnexpectedReply),
+            Ok(Err(provider_error)) => Err(Errors::ProviderError),
+            Err(send_error) => Err(Errors::SendError),
+            _ => Err(Errors::UnexpectedReply),
         }
     }
 }
