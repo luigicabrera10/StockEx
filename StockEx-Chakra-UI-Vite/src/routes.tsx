@@ -6,6 +6,8 @@ import MainDashboard from './views/dashboard/default';
 import NFTMarketplace from './views/dashboard/marketplace';
 import Profile from './views/dashboard/profile';
 import DataTables from './views/dashboard/dataTables';
+import Operations from './views/dashboard/operations';
+
 import RTL from './views/dashboard/rtl';
 
 // Auth Imports
@@ -48,6 +50,14 @@ const routes = [
 		icon: <Icon as={MdLock} width='20px' height='20px' color='inherit' />,
 		component: SignInCentered,
 	},
+	{
+		name: 'Operations',
+		layout: '/dashboard',
+		path: '/operations',
+		icon: <Icon as={MdHome} width='20px' height='20px' color='inherit' />,
+		component: Operations,
+	},
+
 ];
 
 export default routes;

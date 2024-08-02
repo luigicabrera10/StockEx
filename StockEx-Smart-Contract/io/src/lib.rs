@@ -32,8 +32,8 @@ pub struct InitStruct {
 pub enum Actions {
     // Add Actions
     OpenOperation(OpenOperationInput),  // Example an action
-    CloseOperation(u128),               // Example an action
-    CloseAllOperations,
+    CloseOperation(u128, String),       // Example an action
+    CloseAllOperations(String),
 }
 
 
@@ -44,7 +44,9 @@ pub enum Actions {
 pub struct OpenOperationInput {
    pub tickerSymbol: String, // Like TSL, FB, MSFT
    pub operationType: bool,  // 0 = BUY operation, 1 = SELL operation
-   pub investment: u128,
+   pub leverage: u128,       
+   pub date: String,
+//    pub investment: u128,
 }
 
 // 4. Create your own Events
@@ -53,8 +55,14 @@ pub struct OpenOperationInput {
 #[scale_info(crate = gstd::scale_info)]
 pub enum Events {
     // Add Events(Example)
-    OperationCreated,   // Example an event with a simple input
-    OperationClosed, // Example an event with a u128 input
+    OperationCreated{ // Example an event with a simple input
+        comission: u128,
+        actualPrice: u128,
+    },   
+    OperationClosed{
+        actualPrice: u128,
+        return_investment: u128,
+    }, // Example an event with a u128 input
     AllOperationsClosed, // Example an event with a u128 input
 }
 
@@ -87,6 +95,7 @@ pub struct Operation {
     pub tickerSymbol: String,
     pub operationType: bool,    // 0 = BUY operation, 1 = SELL operation
     pub operationState: bool,   // 0 = open, 1 = closed
+    pub leverage: u128,         // X10 to multiply earnings
     pub openDate: String,       // may change
     pub closeDate: String,      // may change
     pub investment: u128,
@@ -100,7 +109,7 @@ pub struct Operation {
 #[codec(crate = gstd::codec)]
 #[scale_info(crate = gstd::scale_info)]
 pub enum Query {
-    // All,
+    AllOperations(ActorId),
     ActiveOperations(ActorId),
     ClosedOperations(ActorId),    
 }
@@ -110,7 +119,7 @@ pub enum Query {
 #[codec(crate = gstd::codec)]
 #[scale_info(crate = gstd::scale_info)]
 pub enum QueryReply {
-    // All(AllOperationsQuery),
+    AllOperations(Vec<Operation>),
     ActiveOperations(Vec<Operation>),
     ClosedOperations(Vec<Operation>),
  

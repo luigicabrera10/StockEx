@@ -11,6 +11,7 @@ pub struct CustomStruct {
     pub owner: ActorId,  // Add owner field
     pub id_number: u128,
     pub userOperations: HashMap<ActorId, Vec<Operation> >,
+    pub collectedFunds: u128, // Our Comission
 }
 
 // Create a implementation on State
@@ -21,27 +22,31 @@ impl CustomStruct {
         let actor_id = msg::source();
 
         // Value
-        let transferred_value = msg::value();
-        msg::send(self.owner, (), transferred_value).expect("Failed to transfer coins to owner");
+        let mut transferred_value = msg::value();
+        // let comission = ((transferred_value as f64) * 0.025)  as u128;
+        let commission = (transferred_value * 25) / 1000; // 2.5% of transferred_value
+        transferred_value = transferred_value - commission;
+        self.collectedFunds = self.collectedFunds + commission;
+        // msg::send(self.owner, (), transferred_value).expect("Failed to transfer coins to owner");
 
         // If the actor_id doesn't exist in userOperations, create a new entry with an empty vector
         let operations = self.userOperations.entry(actor_id).or_insert(Vec::new());
 
+        // Just for now, open price is random, change this when we got an api to know the price
+        let actualPriceRandom: u128 = 100000000000 * 5; // 5.0
+
         // Create a new operation with the provided input and an id of 0
         let new_operation = Operation {
             id: self.id_number, // Use the precomputed length
-            tickerSymbol: input.tickerSymbol,
-            operationType: input.operationType,
-            operationState: false, // false = open, true = close
-            // openDate: Utc::now().to_string(),
-            openDate: "START DATE".to_string(),
-            closeDate: String::new(),  // Empty string as it is not closed yet
-            // investment: input.investment,
-            investment: transferred_value,
-            // openPrice: 0.0,  // Initialize as needed
-            // closedPrice: 0.0,  // Initialize as needed
-            openPrice: 0,  // Initialize as needed
-            closedPrice: 0,  // Initialize as needed
+            tickerSymbol: input.tickerSymbol.clone(),
+            operationType: input.operationType.clone(),
+            operationState: false,      // false = open, true = close
+            leverage: input.leverage.clone(),
+            openDate: input.date.clone(),
+            closeDate: String::new(),   // Empty string as it is not closed yet
+            investment: transferred_value.clone(),
+            openPrice: actualPriceRandom.clone(),   // Initialize as needed
+            closedPrice: 0,             // Initialize as needed
         };
 
         self.id_number = self.id_number+1;
@@ -49,12 +54,24 @@ impl CustomStruct {
         // Push the new operation to the vector of operations
         operations.push(new_operation);
 
-        Ok(Events::OperationCreated)
+        Ok(Events::OperationCreated{
+            comission: commission.clone(),
+            actualPrice: actualPriceRandom.clone(),
+        })
 
     }
 
-    fn finishOperation(&mut self, operation_id: u128) -> Result<Events, Errors> {
+    fn finishOperation(&mut self, operation_id: u128, date: String) -> Result<Events, Errors> {
         let actor_id = msg::source();
+
+        // Just for now, closed price is random:
+        let actualPriceRandom: u128;
+        if operation_id % 2 == 0{
+            actualPriceRandom = 100000000000 * 7; // 7.0
+        } 
+        else {
+            actualPriceRandom = 100000000000 * 3; // 3.0
+        }
     
         // Check if the actor_id exists in userOperations
         if let Some(operations) = self.userOperations.get_mut(&actor_id) {
@@ -64,8 +81,18 @@ impl CustomStruct {
                 if !operation.operationState {
                     // Set the operation state to closed and update the close date
                     operation.operationState = true;
-                    operation.closeDate = "CLOSED DATE".to_string();
-                    return Ok(Events::OperationClosed);
+                    operation.closeDate = date.clone();
+                    operation.closedPrice = actualPriceRandom.clone();
+
+                    // return money
+                    // let investment_return = (operation.investment as f64 * (operation.openPrice as f64 / actualPriceRandom as f64)) as u128;
+                    let investment_return = (operation.investment * operation.openPrice) / actualPriceRandom;
+
+                    msg::send(actor_id, (), investment_return).expect("Failed to transfer coins to owner");
+                    return Ok(Events::OperationClosed{
+                        actualPrice: actualPriceRandom.clone(),
+                        return_investment: investment_return.clone(),
+                    });
                 } else {
                     return Err(Errors::ClosingOperationError);
                 }
@@ -77,9 +104,18 @@ impl CustomStruct {
         }
     }
 
-    fn closeAll(&mut self) -> Result<Events, Errors> {
+    fn closeAll(&mut self, date: String) -> Result<Events, Errors> {
         let actor_id = msg::source();
     
+        // Just for now, closed price is random:
+        let actualPriceRandom: u128;
+        if self.id_number % 2 == 0{
+            actualPriceRandom = 100000000000 * 7; // 7.0
+        } 
+        else {
+            actualPriceRandom = 100000000000 * 3; // 3.0
+        }
+
         // Check if the actor_id exists in userOperations
         if let Some(operations) = self.userOperations.get_mut(&actor_id) {
             for operation in operations.iter_mut() {
@@ -87,7 +123,8 @@ impl CustomStruct {
                 if !operation.operationState {
                     // Set the operation state to closed and update the close date
                     operation.operationState = true;
-                    operation.closeDate = "CLOSED DATE".to_string();
+                    operation.closeDate = date.clone();
+                    operation.closedPrice = actualPriceRandom.clone();
                 }
             }
             return Ok(Events::AllOperationsClosed);
@@ -131,8 +168,8 @@ async fn main() {
     let reply = match action {
 
         Actions::OpenOperation(input) => state.newOperation(input), // Here, we call the implementation
-        Actions::CloseOperation(input) => state.finishOperation(input), // Here, we call the implementation
-        Actions::CloseAllOperations => state.closeAll(), // Here, we call the implementation
+        Actions::CloseOperation(input1, input2) => state.finishOperation(input1, input2), // Here, we call the implementation
+        Actions::CloseAllOperations(input) => state.closeAll(input), // Here, we call the implementation
 
     };
     msg::reply(reply, 0).expect("Error in sending a reply");
@@ -145,6 +182,15 @@ extern "C" fn state() {
     let query: Query = msg::load().expect("Unable to decode the query");
 
     let reply = match query {
+
+        Query::AllOperations(actor_id) => {
+            let operations = state.userOperations
+            .get(&actor_id)
+            .cloned() // Create a copy of the vector if it exists
+            .unwrap_or_else(Vec::new); // Return an empty vector if it doesn't exist
+
+            QueryReply::AllOperations(operations) // Provide the vector directly
+        },
 
         Query::ActiveOperations(actor_id) => {
             let answer: Vec<Operation> = state.userOperations
