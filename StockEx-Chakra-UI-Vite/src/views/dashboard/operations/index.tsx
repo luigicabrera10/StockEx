@@ -102,14 +102,38 @@ export default function UserReports() {
 	if (storedAddress === null) accountHexa = "0x";
 	else accountHexa = convertAddressToHex(storedAddress);
 
-	// console.log("storedAddress: ", storedAddress);
-	// console.log("accountHexa: ", accountHexa);
 
-	// if (account === null) accountHexa = "0x";
-	// else accountHexa = convertAddressToHex(account);
-	// console.log("ACCOUNT HEXA: ", accountHexa);
+	console.log("TableDatacheck: ", tableDataCheck);
 
+	const data = AllOperations(accountHexa);
+	console.log("State: ", data == null || data == undefined ? "Null" : data.allOperations);
+	
+	let alloperations;
 
+	if (data !== null && data !== undefined){
+		alloperations = data.allOperations.map(op => {
+			// Placeholder values for demonstration; you'll need to adjust them
+			const actualPrice = 16; // You should replace this with actual price logic
+			const earning = 8; // You should replace this with actual earning calculation
+			const investment = op.investment; // Assuming this is directly mapped
+	  
+			return {
+			  stock: op.tickerSymbol, // Direct mapping from tickerSymbol to stock
+			  investment: investment,
+			  openPrice: op.openPrice,
+			  actualPrice: actualPrice,
+			  earning: earning,
+			  date: op.openDate, // Assuming openDate is the date you want; adjust if needed
+			  leverage: op.leverage
+			};
+		});
+	}
+	else{
+		alloperations = [];
+	}
+
+	console.log("ALL OPERATIONS: ", alloperations);
+	
 	
 
 	return (
@@ -171,8 +195,8 @@ export default function UserReports() {
 				<WeeklyRevenue />
 			</SimpleGrid> */}
 			<SimpleGrid columns={{ base: 1, md: 1, xl: 1 }} gap='20px' mb='20px'>
-				<CheckTable tableData={tableDataCheck} />
-				<AllOperations account={accountHexa}/>
+				<CheckTable tableData={alloperations} />
+				{/* <AllOperations account={accountHexa}/> */}
 				{/* <SimpleGrid columns={{ base: 1, md: 2, xl: 2 }} gap='20px'>
 					<DailyTraffic />
 					<PieCard />
