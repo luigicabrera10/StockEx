@@ -41,24 +41,13 @@ import tableDataComplex from '../default/variables/tableDataComplex';
 import { ReadOperations } from '@/smartContractComunication/read/ReadOperations';
 
 import { AllOperations } from '@/smartContractComunication/read/AllOperations';
+import { ClosedOperations } from '@/smartContractComunication/read/ClosedOperations';
+import { ActiveOperations } from '@/smartContractComunication/read/ActiveOperations';
+
 import React, { useState, useEffect } from 'react';
 import { web3Enable, web3Accounts } from '@polkadot/extension-dapp';
-import { encodeAddress, decodeAddress } from '@polkadot/util-crypto';
-import { hexToU8a, u8aToHex } from '@polkadot/util';
-import { ACCOUNT_ID_LOCAL_STORAGE_KEY } from '@/app/consts';
 
-
-// Convert a base58 address to a hexadecimal string
-function convertAddressToHex(address: string): string {
-	try {
-		const decodedAddress = decodeAddress(address);
-		const hexAddress = u8aToHex(decodedAddress, -1, '0x');
-		return hexAddress;
-	} catch (error) {
-		console.error('Error converting address to hex:', error);
-		return '0x';
-	}
-}
+import {getHexAdress} from '../../../utils/getHexAdress';
 
 export default function UserReports() {
 
@@ -66,7 +55,10 @@ export default function UserReports() {
 	const brandColor = useColorModeValue('brand.500', 'white');
 	const boxBg = useColorModeValue('secondaryGray.300', 'whiteAlpha.100');
 
-	// For reading operations:
+	// let datatype
+	let dataType = 0;
+
+	// For connecting polkadot wallet:
 	const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
 	const [account, setAccount] = useState<string | null>(null);
 	
@@ -97,42 +89,47 @@ export default function UserReports() {
 		}
 	}, []);
 
-	const storedAddress = localStorage.getItem(ACCOUNT_ID_LOCAL_STORAGE_KEY);
-	let accountHexa:string;
-	if (storedAddress === null) accountHexa = "0x";
-	else accountHexa = convertAddressToHex(storedAddress);
+	// Change the account
+	let accountHexa: string = getHexAdress();
 
-
+	// Xample data
 	console.log("TableDatacheck: ", tableDataCheck);
 
-	const data = AllOperations(accountHexa);
-	console.log("State: ", data == null || data == undefined ? "Null" : data.allOperations);
-	
-	let alloperations;
+	// Real data
+	let data;
+	if (dataType == 1) data = ActiveOperations(accountHexa);
+	else if (dataType == 2) data = ClosedOperations(accountHexa);
+	else data = AllOperations(accountHexa);
 
-	if (data !== null && data !== undefined){
-		alloperations = data.allOperations.map(op => {
+	console.log("State: ",  data);
+	
+	let finalOperations;
+	if (data !== undefined && data !== null){
+
+		if (dataType == 1) data = data.activeOperations;
+		else if (dataType == 2) data = data.closedOperations;
+		else data = data.allOperations;
+
+		finalOperations = data.map(op => {
 			// Placeholder values for demonstration; you'll need to adjust them
 			const actualPrice = 16; // You should replace this with actual price logic
 			const earning = 8; // You should replace this with actual earning calculation
 			const investment = op.investment; // Assuming this is directly mapped
-	  
+		
 			return {
-			  stock: op.tickerSymbol, // Direct mapping from tickerSymbol to stock
-			  investment: investment,
-			  openPrice: op.openPrice,
-			  actualPrice: actualPrice,
-			  earning: earning,
-			  date: op.openDate, // Assuming openDate is the date you want; adjust if needed
-			  leverage: op.leverage
+				stock: op.tickerSymbol, // Direct mapping from tickerSymbol to stock
+				investment: investment,
+				openPrice: op.openPrice,
+				actualPrice: actualPrice,
+				earning: earning,
+				date: op.openDate, // Assuming openDate is the date you want; adjust if needed
+				leverage: op.leverage
 			};
 		});
 	}
-	else{
-		alloperations = [];
-	}
+	else finalOperations = [];
 
-	console.log("ALL OPERATIONS: ", alloperations);
+	console.log("Final OPERATIONS: ", finalOperations);
 	
 	
 
@@ -195,7 +192,7 @@ export default function UserReports() {
 				<WeeklyRevenue />
 			</SimpleGrid> */}
 			<SimpleGrid columns={{ base: 1, md: 1, xl: 1 }} gap='20px' mb='20px'>
-				<CheckTable tableData={alloperations} />
+				<CheckTable tableData={finalOperations} />
 				{/* <AllOperations account={accountHexa}/> */}
 				{/* <SimpleGrid columns={{ base: 1, md: 2, xl: 2 }} gap='20px'>
 					<DailyTraffic />

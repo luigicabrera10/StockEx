@@ -4,7 +4,7 @@ import { useApi, useAlert } from "@gear-js/react-hooks";
 import { AnyJson } from "@polkadot/types/types";
 import { useState, useEffect } from "react";
 
-export function AllOperations(account: string) : AnyJson | null{
+export function ClosedOperations(account: string) : AnyJson | null{
    const { api } = useApi();
    const alert = useAlert();
    const [fullState, setFullState] = useState<AnyJson | null>(null);
@@ -32,7 +32,7 @@ export function AllOperations(account: string) : AnyJson | null{
          }
 
          try {
-            const result = await api.programState.read({ programId: PROGRAM_ID, payload: { alloperations: account } }, metadata);
+            const result = await api.programState.read({ programId: PROGRAM_ID, payload: { closedoperations: account } }, metadata);
             setFullState(result.toJSON());
          } catch (error) {
             alert.error((error as Error).message);

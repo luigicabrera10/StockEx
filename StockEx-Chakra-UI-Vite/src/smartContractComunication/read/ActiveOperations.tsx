@@ -4,7 +4,7 @@ import { useApi, useAlert } from "@gear-js/react-hooks";
 import { AnyJson } from "@polkadot/types/types";
 import { useState, useEffect } from "react";
 
-export function AllOperations(account: string) : AnyJson | null{
+export function ActiveOperations(account: string) : AnyJson | null{
    const { api } = useApi();
    const alert = useAlert();
    const [fullState, setFullState] = useState<AnyJson | null>(null);
@@ -18,9 +18,6 @@ export function AllOperations(account: string) : AnyJson | null{
 
       const fetchState = async () => {
 
-         // // Default answer
-         // setFullState({ alloperations: [] });
-
          if (!PROGRAM_ID || !METADATA_TEXT) {
             alert.error("Program ID or metadata not set correctly.");
             return;
@@ -32,7 +29,7 @@ export function AllOperations(account: string) : AnyJson | null{
          }
 
          try {
-            const result = await api.programState.read({ programId: PROGRAM_ID, payload: { alloperations: account } }, metadata);
+            const result = await api.programState.read({ programId: PROGRAM_ID, payload: { activeoperations: account } }, metadata);
             setFullState(result.toJSON());
          } catch (error) {
             alert.error((error as Error).message);
