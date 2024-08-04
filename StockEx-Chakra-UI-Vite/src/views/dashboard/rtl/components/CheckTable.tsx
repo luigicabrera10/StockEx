@@ -21,7 +21,8 @@ type RowObj = {
 	actualPrice: number;
 	earning: number;
 	leverage: number;
-	date: string;
+	open_date: string;
+	closed_date: string;
 };
  
 const columnHelper = createColumnHelper<RowObj>();
@@ -139,15 +140,32 @@ export default function CheckTable(props: { tableData: any }) {
 				</Text>
 			)
 		}),
-		columnHelper.accessor('date', {
-			id: 'date',
+		columnHelper.accessor('open_date', {
+			id: 'open_date',
 			header: () => (
 				<Text
 					justifyContent='space-between'
 					align='center'
 					fontSize={{ sm: '10px', lg: '12px' }}
 					color='gray.400'>
-					DATE
+					OPEN DATE
+				</Text>
+			),
+			cell: (info) => (
+				<Text color={textColor} fontSize='sm' fontWeight='700'>
+					{info.getValue()}
+				</Text>
+			)
+		}),
+		columnHelper.accessor('closed_date', {
+			id: 'closed_date',
+			header: () => (
+				<Text
+					justifyContent='space-between'
+					align='center'
+					fontSize={{ sm: '10px', lg: '12px' }}
+					color='gray.400'>
+					CLOSE DATE
 				</Text>
 			),
 			cell: (info) => (

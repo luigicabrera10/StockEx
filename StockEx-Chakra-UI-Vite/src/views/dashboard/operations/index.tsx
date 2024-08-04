@@ -112,18 +112,21 @@ export default function UserReports() {
 
 		finalOperations = data.map(op => {
 			// Placeholder values for demonstration; you'll need to adjust them
-			const actualPrice = 16; // You should replace this with actual price logic
-			const earning = 8; // You should replace this with actual earning calculation
-			const investment = op.investment; // Assuming this is directly mapped
-		
+			const actualPrice = 1100000000000 / Math.pow(10,10); // You should replace this with actual price logic
+			const investment = op.investment / Math.pow(10,10); // Assuming this is directly mapped
+			const openPrice = op.openPrice / Math.pow(10,10);
+			const earning = actualPrice * investment / openPrice ; // You should replace this with actual earning calculation
+
+			
 			return {
 				stock: op.tickerSymbol, // Direct mapping from tickerSymbol to stock
 				investment: investment,
-				openPrice: op.openPrice,
+				openPrice: openPrice,
 				actualPrice: actualPrice,
 				earning: earning,
-				date: op.openDate, // Assuming openDate is the date you want; adjust if needed
-				leverage: op.leverage
+				open_date: op.openDate.replaceAll("-", " - "), 
+				closed_date: op.closeDate == "" ?  "-" : op.closeDate.replaceAll("-", " - "), 
+				leverage: "X " + op.leverage
 			};
 		});
 	}
