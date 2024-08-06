@@ -30,6 +30,7 @@ import MiniStatistics from '../../../components/card/MiniStatistics';
 import IconBox from '../../../components/icons/IconBox';
 import { MdAddTask, MdAttachMoney, MdBarChart, MdFileCopy } from 'react-icons/md';
 import CheckTable from '../rtl/components/CheckTable';
+import OperationTable from '../operations/components/OperationsTable';
 import ComplexTable from '../default/components/ComplexTable';
 import DailyTraffic from '../default/components/DailyTraffic';
 import PieCard from '../default/components/PieCard';
@@ -61,6 +62,8 @@ export default function UserReports() {
 	// For connecting polkadot wallet:
 	const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
 	const [account, setAccount] = useState<string | null>(null);
+	const [selectedValue, setSelectedValue] = useState('all');
+	// const [finalOperations, setFinalOperations] = useState<any[]>([]);
 	
 	useEffect(() => {
 		// localStorage.setItem('attemptedLogin', 'true');
@@ -92,10 +95,17 @@ export default function UserReports() {
 	// Change the account
 	let accountHexa: string = getHexAdress();
 
+	// Handle filters:
+	const handleSelectChange = (event) => {
+		console.log("Changed Type to: ", event.target.value);
+		setSelectedValue(event.target.value);
+	};
+
 	// Xample data
 	console.log("TableDatacheck: ", tableDataCheck);
 
 	// Real data
+	console.log("DataType: ", selectedValue);
 	let data;
 	if (dataType == 1) data = ActiveOperations(accountHexa);
 	else if (dataType == 2) data = ClosedOperations(accountHexa);
@@ -130,7 +140,10 @@ export default function UserReports() {
 			};
 		});
 	}
-	else finalOperations = [];
+	else {
+		finalOperations = [];
+		// setFinalOperations([]);
+	}
 
 	console.log("Final OPERATIONS: ", finalOperations);
 	
@@ -190,12 +203,26 @@ export default function UserReports() {
 				/>
 			</SimpleGrid>
 
+
+			<SimpleGrid columns={{ base: 1, md: 2, xl: 2 }} gap='20px' mb='20px'>
+
+			<Select id='op_type' variant='mini'mt='5px' me='0px' defaultValue={'all'} onChange={handleSelectChange}>
+				<option value='all'>All Operations</option>
+				<option value='active'>Active Operations</option>
+				<option value='closed'>Closed Operations</option>
+			</Select>
+
+				
+
+			</SimpleGrid>
+			
+
 			{/* <SimpleGrid columns={{ base: 1, md: 2, xl: 2 }} gap='20px' mb='20px'>
 				<TotalSpent />
 				<WeeklyRevenue />
 			</SimpleGrid> */}
 			<SimpleGrid columns={{ base: 1, md: 1, xl: 1 }} gap='20px' mb='20px'>
-				<CheckTable tableData={finalOperations} />
+				<OperationTable tableData={finalOperations} opType={selectedValue} />
 				{/* <AllOperations account={accountHexa}/> */}
 				{/* <SimpleGrid columns={{ base: 1, md: 2, xl: 2 }} gap='20px'>
 					<DailyTraffic />
