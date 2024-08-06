@@ -39,11 +39,12 @@ import TotalSpent from '../default/components/TotalSpent';
 import WeeklyRevenue from '../default/components/WeeklyRevenue';
 import tableDataCheck from '../default/variables/tableDataCheck';
 import tableDataComplex from '../default/variables/tableDataComplex';
-import { ReadOperations } from '@/smartContractComunication/read/ReadOperations';
+// import { ReadOperations } from '@/smartContractComunication/read/ReadOperations';
+import {Slider, SliderTrack, SliderFilledTrack, SliderThumb, Text, Stack } from '@chakra-ui/react';
 
 import { AllOperations } from '@/smartContractComunication/read/AllOperations';
-import { ClosedOperations } from '@/smartContractComunication/read/ClosedOperations';
-import { ActiveOperations } from '@/smartContractComunication/read/ActiveOperations';
+// import { ClosedOperations } from '@/smartContractComunication/read/ClosedOperations';
+// import { ActiveOperations } from '@/smartContractComunication/read/ActiveOperations';
 
 import React, { useState, useEffect } from 'react';
 import { web3Enable, web3Accounts } from '@polkadot/extension-dapp';
@@ -56,14 +57,11 @@ export default function UserReports() {
 	const brandColor = useColorModeValue('brand.500', 'white');
 	const boxBg = useColorModeValue('secondaryGray.300', 'whiteAlpha.100');
 
-	// let datatype
-	let dataType = 0;
-
 	// For connecting polkadot wallet:
 	const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
 	const [account, setAccount] = useState<string | null>(null);
-	const [selectedValue, setSelectedValue] = useState('all');
-	// const [finalOperations, setFinalOperations] = useState<any[]>([]);
+	const [OperationTypeValue, setOperationTypeValue] = useState('all');
+	const [StockValue, setStockValue] = useState('any');
 	
 	useEffect(() => {
 		// localStorage.setItem('attemptedLogin', 'true');
@@ -75,17 +73,17 @@ export default function UserReports() {
 					console.log('No extension found');
 					return;
 				} else {
-					console.log('Extension found');
+					// console.log('Extension found');
 				}
 				const accounts = await web3Accounts();
 				if (accounts.length > 0) {
 					setAccount(accounts[0].address);
 					setIsLoggedIn(true);
-					console.log('Logged in');
+					// console.log('Logged in');
 				}
 
-				console.log('Extensions:', extensions);
-				console.log('Accounts:', accounts);
+				// console.log('Extensions:', extensions);
+				// console.log('Accounts:', accounts);
 			};
 	
 			connectToPolkadot();
@@ -96,37 +94,39 @@ export default function UserReports() {
 	let accountHexa: string = getHexAdress();
 
 	// Handle filters:
-	const handleSelectChange = (event) => {
+	const handleOperationTypeChange = (event) => {
 		console.log("Changed Type to: ", event.target.value);
-		setSelectedValue(event.target.value);
+		setOperationTypeValue(event.target.value);
 	};
 
-	// Xample data
-	console.log("TableDatacheck: ", tableDataCheck);
+	const getAllStocks = (finalOperations) => {
+		const uniqueStocks = Array.from(new Set(finalOperations.map(op => op.stock)));
+		// Create option elements for each stock symbol
+		return uniqueStocks.map(stock => (
+			 <option key={stock} value={stock}>
+				  {stock}
+			 </option>
+		));
+	}
+
+	const handleStockChange = (event) => {
+		console.log("Changed Stock to: ", event.target.value);
+		setStockValue(event.target.value);
+	};
 
 	// Real data
-	console.log("DataType: ", selectedValue);
-	let data;
-	if (dataType == 1) data = ActiveOperations(accountHexa);
-	else if (dataType == 2) data = ClosedOperations(accountHexa);
-	else data = AllOperations(accountHexa);
-
-	console.log("State: ",  data);
+	const data = AllOperations(accountHexa);
+	console.log("AllOperations: ",  data);
 	
 	let finalOperations;
 	if (data !== undefined && data !== null){
 
-		if (dataType == 1) data = data.activeOperations;
-		else if (dataType == 2) data = data.closedOperations;
-		else data = data.allOperations;
-
-		finalOperations = data.map(op => {
+		finalOperations = data.allOperations.map(op => {
 			// Placeholder values for demonstration; you'll need to adjust them
 			const actualPrice = 1100000000000 / Math.pow(10,10); // You should replace this with actual price logic
 			const investment = op.investment / Math.pow(10,10); // Assuming this is directly mapped
 			const openPrice = op.openPrice / Math.pow(10,10);
 			const earning = actualPrice * investment / openPrice ; // You should replace this with actual earning calculation
-
 			
 			return {
 				stock: op.tickerSymbol, // Direct mapping from tickerSymbol to stock
@@ -138,14 +138,12 @@ export default function UserReports() {
 				closed_date: op.closeDate == "" ?  "-" : op.closeDate.replaceAll("-", " - "), 
 				leverage: "X " + op.leverage
 			};
+			
 		});
 	}
-	else {
-		finalOperations = [];
-		// setFinalOperations([]);
-	}
-
+	else finalOperations = [];
 	console.log("Final OPERATIONS: ", finalOperations);
+
 	
 	
 
@@ -206,14 +204,18 @@ export default function UserReports() {
 
 			<SimpleGrid columns={{ base: 1, md: 2, xl: 2 }} gap='20px' mb='20px'>
 
-			<Select id='op_type' variant='mini'mt='5px' me='0px' defaultValue={'all'} onChange={handleSelectChange}>
+			<Select id='op_type' variant='mini'mt='5px' me='0px' defaultValue={'all'} onChange={handleOperationTypeChange}>
 				<option value='all'>All Operations</option>
 				<option value='active'>Active Operations</option>
 				<option value='closed'>Closed Operations</option>
 			</Select>
 
-				
+			<Select id='stock_ticker' variant='mini'mt='5px' me='0px' defaultValue={'any'} onChange={handleStockChange}>
+				<option value='any'>Any Stock</option>
+				{getAllStocks(finalOperations)}
+			</Select>
 
+			
 			</SimpleGrid>
 			
 
@@ -222,7 +224,7 @@ export default function UserReports() {
 				<WeeklyRevenue />
 			</SimpleGrid> */}
 			<SimpleGrid columns={{ base: 1, md: 1, xl: 1 }} gap='20px' mb='20px'>
-				<OperationTable tableData={finalOperations} opType={selectedValue} />
+				<OperationTable tableData={finalOperations} opType={OperationTypeValue} stock={StockValue}/>
 				{/* <AllOperations account={accountHexa}/> */}
 				{/* <SimpleGrid columns={{ base: 1, md: 2, xl: 2 }} gap='20px'>
 					<DailyTraffic />
