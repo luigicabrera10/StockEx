@@ -41,6 +41,7 @@ import tableDataCheck from '../default/variables/tableDataCheck';
 import tableDataComplex from '../default/variables/tableDataComplex';
 // import { ReadOperations } from '@/smartContractComunication/read/ReadOperations';
 import {Slider, SliderTrack, SliderFilledTrack, SliderThumb, Text, Stack } from '@chakra-ui/react';
+import { RangeSlider, RangeSliderTrack, RangeSliderFilledTrack, RangeSliderThumb } from '@chakra-ui/react';
 
 import { AllOperations } from '@/smartContractComunication/read/AllOperations';
 // import { ClosedOperations } from '@/smartContractComunication/read/ClosedOperations';
@@ -62,6 +63,9 @@ export default function UserReports() {
 	const [account, setAccount] = useState<string | null>(null);
 	const [OperationTypeValue, setOperationTypeValue] = useState('all');
 	const [StockValue, setStockValue] = useState('any');
+	const [InvestmentRange, setInvestmentRange] = useState([0, 1000]);
+	const [EarningsRange, setEarningsRange] = useState([0, 1000]);
+	const [LeverageRange, setLeverageRange] = useState([0, 1000]);
 	
 	useEffect(() => {
 		// localStorage.setItem('attemptedLogin', 'true');
@@ -109,10 +113,37 @@ export default function UserReports() {
 		));
 	}
 
+	const getMaxMinEarning = (finalOperations) : number[] => {
+		let min = null, max = null;
+		finalOperations.forEach( (op) => {
+			const actualPrice = 1100000000000 / Math.pow(10,10);
+			const investment = op.investment / Math.pow(10,10); // Assuming this is directly mapped
+			const openPrice = op.openPrice / Math.pow(10,10);
+			const earning = actualPrice * investment / openPrice ; // You should replace this with actual earning calculation
+			if (min == null || earning < min) min = earning;
+			if (max == null || earning > max) max = earning;
+		});
+		if (min == null) min = 0;
+		if (max == null) max = 10000;
+
+		if (min < 0) min = Math.ceil(min);
+		else min = Math.floor(min);
+
+		if (max < 0) max = Math.floor(max);
+		else max = Math.ceil(max);
+
+		return [min, max];
+	}
+
 	const handleStockChange = (event) => {
 		console.log("Changed Stock to: ", event.target.value);
 		setStockValue(event.target.value);
 	};
+
+	const handleRangeChange = (setRange) => (values) => {
+		setRange(values);
+		console.log("Changed range to: ", values);
+	}
 
 	// Real data
 	const data = AllOperations(accountHexa);
@@ -144,7 +175,9 @@ export default function UserReports() {
 	else finalOperations = [];
 	console.log("Final OPERATIONS: ", finalOperations);
 
-	
+	const MinMaxEarning = getMaxMinEarning(finalOperations);
+	console.log("MIN MAX EARNINGS: ", MinMaxEarning)
+	// setEarningsRange(MinMaxEarning);
 	
 
 	return (
@@ -202,19 +235,77 @@ export default function UserReports() {
 			</SimpleGrid>
 
 
-			<SimpleGrid columns={{ base: 1, md: 2, xl: 2 }} gap='20px' mb='20px'>
+			<SimpleGrid columns={{ base: 1, md: 5, xl: 5 }} gap='20px' mb='20px'>
 
-			<Select id='op_type' variant='mini'mt='5px' me='0px' defaultValue={'all'} onChange={handleOperationTypeChange}>
-				<option value='all'>All Operations</option>
-				<option value='active'>Active Operations</option>
-				<option value='closed'>Closed Operations</option>
-			</Select>
+			<Box>
+				<FormLabel>Operation State</FormLabel>
+				<Select id='op_type' variant='mini'mt='5px' me='0px' defaultValue={'all'} onChange={handleOperationTypeChange}>
+					<option value='all'>All Operations</option>
+					<option value='active'>Active Operations</option>
+					<option value='closed'>Closed Operations</option>
+				</Select>
+			</Box>
 
-			<Select id='stock_ticker' variant='mini'mt='5px' me='0px' defaultValue={'any'} onChange={handleStockChange}>
-				<option value='any'>Any Stock</option>
-				{getAllStocks(finalOperations)}
-			</Select>
+			<Box>
+				<FormLabel>Stock</FormLabel>
+				<Select id='stock_ticker' variant='mini'mt='5px' me='0px' defaultValue={'any'} onChange={handleStockChange}>
+					<option value='any'>Any Stock</option>
+					{getAllStocks(finalOperations)}
+				</Select>
+			</Box>
 
+			<Box>
+				<FormLabel>Investment</FormLabel>
+				<RangeSlider
+					defaultValue={InvestmentRange}
+					min={0}
+					max={1000}
+					step={10}
+					onChange={handleRangeChange(setInvestmentRange)}
+				>
+					<RangeSliderTrack>
+					<RangeSliderFilledTrack />
+					</RangeSliderTrack>
+					<RangeSliderThumb index={0} />
+					<RangeSliderThumb index={1} />
+				</RangeSlider>
+				<Text>Min: {InvestmentRange[0]} - Max: {InvestmentRange[1]}</Text>
+        </Box>
+
+		  <Box>
+				<FormLabel>Earnings</FormLabel>
+				<RangeSlider
+					defaultValue={MinMaxEarning}
+					min={MinMaxEarning[0]}
+					max={MinMaxEarning[1]}
+					step={10}
+					onChange={handleRangeChange(setEarningsRange)}
+				>
+					<RangeSliderTrack>
+					<RangeSliderFilledTrack />
+					</RangeSliderTrack>
+					<RangeSliderThumb index={0} />
+					<RangeSliderThumb index={1} />
+				</RangeSlider>
+				<Text>Min: {EarningsRange[0]} - Max: {EarningsRange[1]}</Text>
+        </Box>
+
+		  <Box>
+				<FormLabel>Leverage</FormLabel>
+				<RangeSlider
+					defaultValue={LeverageRange}
+					min={0}
+					max={100}
+					onChange={handleRangeChange(setLeverageRange)}
+				>
+					<RangeSliderTrack>
+					<RangeSliderFilledTrack />
+					</RangeSliderTrack>
+					<RangeSliderThumb index={0} />
+					<RangeSliderThumb index={1} />
+				</RangeSlider>
+				<Text>Min: {LeverageRange[0]} - Max: {LeverageRange[1]}</Text>
+        </Box>
 			
 			</SimpleGrid>
 			
@@ -224,7 +315,13 @@ export default function UserReports() {
 				<WeeklyRevenue />
 			</SimpleGrid> */}
 			<SimpleGrid columns={{ base: 1, md: 1, xl: 1 }} gap='20px' mb='20px'>
-				<OperationTable tableData={finalOperations} opType={OperationTypeValue} stock={StockValue}/>
+				<OperationTable 
+					tableData={finalOperations} 
+					opType={OperationTypeValue} 
+					stock={StockValue}
+					investment={InvestmentRange}
+					earnings={EarningsRange}
+					leverage={LeverageRange}/>
 				{/* <AllOperations account={accountHexa}/> */}
 				{/* <SimpleGrid columns={{ base: 1, md: 2, xl: 2 }} gap='20px'>
 					<DailyTraffic />
