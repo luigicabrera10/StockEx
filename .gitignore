@@ -1,7 +1,9 @@
 nodejs_server/passphrase.txt
 nodejs_server/currency-fetching-service/currencyApiKey.txt
 nodejs_server/real-time-stocks-fetching-service/stockApiKey.txt
-nodejs_server/historical-stocks-fetching-service/historicalStockApiKey.txt
+nodejs_server/historical-stocks-fetching-service/historicalStockApiKeyAlpha.txt
+nodejs_server/historical-stocks-fetching-service/historicalStockApiKeyTwelveData.txt
+nodejs_server/historical-stocks-fetching-service/historicalStockFetchingOld.js
 nodejs_server/testing.js
 nodejs_server/node_modules/
 
