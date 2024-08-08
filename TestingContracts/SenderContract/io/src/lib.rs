@@ -46,11 +46,13 @@ pub struct UserRequestInput {
 }
 
 
-#[derive(Debug, Encode, Decode, TypeInfo)]
+#[derive(Debug, Decode, Encode, TypeInfo)]
 #[codec(crate = gstd::codec)]
 #[scale_info(crate = gstd::scale_info)]
 pub enum ProviderActions {
-    ProvideData(UserRequestInput),
+    // Add Actions
+    ProvideData(UserRequestInput),  // Example an action
+    RandomAction(bool),
 }
 
 #[derive(Debug, Decode, Encode, TypeInfo)]
