@@ -72,7 +72,7 @@ async function updateExchangeRates(currencies) {
 
     // If no currency needs an update:
     if (requestCurrencies.length === 0){
-        console.log("\nCurrencys updated successfully!");
+        // console.log("\nCurrencys updated successfully!");
         return;
     }
 
@@ -141,7 +141,7 @@ async function initCurrencyFetchingService(){
 
     // ONLY If you want to update everything at once every day (In order to not wast api calls on certain symbols every day):
     // Very usefull for now 
-    console.log("\nUpdating all supported currencies: ", allSupportedCurrencies);
+    console.log("\nUpdating all supported currencies...");
     await updateExchangeRates(allSupportedCurrencies);
 
     // Examples:

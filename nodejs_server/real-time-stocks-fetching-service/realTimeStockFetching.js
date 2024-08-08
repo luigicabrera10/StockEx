@@ -1,12 +1,5 @@
 const axios = require('axios');
 const fs = require('fs').promises;
-const { 
-    isCurrencySupported, 
-    getCurrencyPrice, 
-    updateExchangeRates, 
-    getCurrencyLastRefresh, 
-    initCurrencyFetchingService
-} = require('../currency-fetching-service/currencyExchangeFetching.js');
 
 let STOCK_API_KEY; // Api key for stock price service
 const stockApiKeyFile = '/home/northsoldier/Documents/Hackathons/Varathon - StockEx/nodejs_server/real-time-stocks-fetching-service/stockApiKey.txt';
@@ -21,6 +14,7 @@ let stocksUpdates = { }; // Everything have as base price the USD
 // Example: {'TSLA': {'lastRefresh': '2024-07-24T23:59:59Z', 'price': 154.23}, 'MSFT': {'lastRefresh': '2024-07-24T23:59:59Z', 'price': 153.8537454521}}
 
 // Set lower
+// let updateStockTimeRate = 2 * 60 * 1000; // 2 minutes in milliseconds
 let updateStockTimeRate = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
 
 
@@ -65,26 +59,17 @@ function isStockSupported(symbol){
     return allSupportedStocks.includes(symbol);
 }
 
-function getSavedStockPrice(symbol) {
-    if (stocksUpdates[symbol]) {
-        return stocksUpdates[symbol].price;
-    } else {
-        console.log("Warning: null returned because '", symbol, "' stock does not exist on dictionary");
-        return null;
-    }
-}
+async function updateStockPrice(symbol){
 
-// Function to fetch stock price in USD and convert it to the specified currency
-const getStockPrice = async (symbol, currency, skip_decimals = false) => {
+    if (!isStockSupported(symbol)){
+        console.log("Stock is not supported")
+        return;
+    }
 
     // Check if stock price exist and if a update is needed
     const currentTime = new Date().getTime();
     const lastRefreshTime = new Date(stocksUpdates[symbol]?.lastRefresh || 0).getTime();
-    if (stocksUpdates[symbol] && (currentTime - lastRefreshTime <= updateStockTimeRate)){
-        const priceConverted = getSavedStockPrice(symbol)  * getCurrencyPrice(currency);
-        if (skip_decimals) return Math.round(priceConverted * decimal_fix_for_SmartContracts);
-        return priceConverted;
-    }
+    if (stocksUpdates[symbol] && (currentTime - lastRefreshTime <= updateStockTimeRate)) return;
 
     // If an update is required:
     console.log("Warning: Updating the following stock: ", symbol);
@@ -106,95 +91,32 @@ const getStockPrice = async (symbol, currency, skip_decimals = false) => {
         };
 
         // console.log("Updated: ", stocksUpdates[symbol]);
-
         await saveStockPrices();
-
-        // At this point we know that the currency is supported and an update was performed
-        const priceConverted = priceUSD * getCurrencyPrice(currency); 
-
-        // Smart Contract needs to fix its decimal points
-        if (skip_decimals) return Math.round(priceConverted.toFixed(10) * decimal_fix_for_SmartContracts);
-        return priceConverted;
+        return;
 
     } catch (error) {
         if (error.response && error.response.status === 429) {
             console.error('Error: We have exceeded the number of API calls available.');
         } else {
             console.error('Error fetching data:', error.message);
-        }
-        
-        if (stocksUpdates[symbol]) console.error("Recovering using last fetched price");
-        else throw error;
-        
+        }   
     }
-};
+}
 
-// Function to fetch a single stock price and convert to the specified currency
-const fetchSingleStockPrice = async (symbol, currency, skip_decimals = false) => {
-
-    if (!isCurrencySupported(currency)){
-        console.log("The Currency '", currency, "' is not supported");
+// Function to fetch stock price in USD and convert it to the specified currency
+async function getStockPrice(symbol){
+    if (!isStockSupported(symbol)){
+        console.log("Stock is not supported")
         return null;
     }
+
+    await updateStockPrice(symbol);
 
     if (!isStockSupported(symbol)){
-        console.log("The Stock '", symbol, "' is not supported");
+        console.log("Stock price didnt found")
         return null;
     }
-
-    // Update Currency Price
-    await updateExchangeRates([currency]);
-
-    try {
-        const priceData = await getStockPrice(symbol, currency, skip_decimals);
-        console.log("Fetch: ", priceData);
-        return priceData;
-    } catch (error) {
-        // Error is already logged in getStockPrice function
-        console.log("SOME ERROR");
-        throw error;
-    }
-};
-
-// Function to fetch multiple stock prices and convert to specified currencies
-const fetchMultipleStockPrices = async (symbolsAndCurrencies, skip_decimals = false) => {
-
-    let validRequest = true;
-    let request_currencys = [];
-
-    symbolsAndCurrencies.forEach(([symbol, currency]) => {
-        if (!request_currencys.includes(currency)){
-            request_currencys.push(currency);
-
-            if (!isCurrencySupported(currency)){
-                validRequest = false;
-                console.log("The Currency '", currency, "' is not supported");
-                return;
-            }
-
-        }
-
-        if (!isStockSupported(symbol)){
-            console.log("The Stock '", symbol, "' is not supported");
-            validRequest = false;
-            return;
-        }
-    });
-
-    if (!validRequest) return null;
-
-    updateExchangeRates(request_currencys);
-
-    try {
-        const stockDataPromises = symbolsAndCurrencies.map(([symbol, currency]) => getStockPrice(symbol, currency, skip_decimals));
-        const stockPrices = await Promise.all(stockDataPromises);
-        const finalData = stockPrices;
-        console.log("Fetch: ", finalData);
-        return finalData; // Return an object with a `prices` array
-    } catch (error) {
-        console.log("SOME ERROR");
-        throw error;
-    }
+    return stocksUpdates[symbol].price;
 };
 
 const fetchAllStockSymbols = async () => {
@@ -214,36 +136,69 @@ const fetchAllStockSymbols = async () => {
     }
 };
 
+async function wait(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/*
+async function updateStocksPerMinute() {
+
+    while (true) {
+        const currentTime = new Date().getTime();
+        let allUpdated = true;
+        let state;
+    
+        for (let stock of allSupportedStocks) {
+            const lastRefreshTime = stocksUpdates[stock]
+                ? new Date(stocksUpdates[stock]['lastRefresh']).getTime()
+                : 0;
+    
+            if (currentTime - lastRefreshTime > updateStockTimeRate) {
+                allUpdated = false;
+                await updateStockPrice(stock);
+    
+                // Pause to respect the API rate limit (60 calls per minute)
+                await wait(1000); // 1 seconds delay between each call
+            }
+    
+            // If the API limit is hit (60 calls), wait for 61 seconds
+            // if (Object.keys(stocksUpdates).length % 8 === 0 || state === false) {
+            //     console.log("API limit hit. Waiting for 61 seconds...");
+            //     await wait(61000);
+            // }
+        }
+    
+        if (allUpdated) {
+            console.log("All stocks are updated. Waiting two minutes...");
+            // Wait two minutes (the next update)
+            const timeUntilNextUpdate = updateStockTimeRate - (currentTime % updateStockTimeRate);
+            await wait(timeUntilNextUpdate);
+        } else {
+            console.log("Some stocks were updated. Continuing process...");
+            // If not all stocks were updated, continue checking after a short break
+            await wait(5000); // 5 seconds delay before the next loop iteration
+        }
+    }
+}
+*/
+
+
 async function initStockFetchingService(){
     
-    await initCurrencyFetchingService();
     await setStockApiKey();
     await loadSavedStockPrices();
     await loadAllSupportedStocks();
 
     console.log("Stock prices loaded: ", stocksUpdates, "\n");
 
-
-    // Examples:
-
-    // // Fetch and print single stock price
-    // await fetchSingleStockPrice('AAPL', 'EUR');
-
-    // // Fetch and print multiple stock prices
-    // await fetchMultipleStockPrices([
-    //     ['AAPL', 'EUR'],
-    //     ['TSLA', 'GBP'],
-    //     ['MSFT', 'JPY'],
-    //     ['NVDA', 'USD']
-    // ]);
-
-    console.log("\nReal Time Stock Fetching Service Init Successfully!\n\n")
+    console.log("\nReal Time Stock Fetching Service Init Successfully!\n\n");
 };
 
-initStockFetchingService();
+// initStockFetchingService();
 
-// module.exports = {
-//     getStockPrice,
-//     fetchSingleStockPrice,
-//     fetchMultipleStockPrices
-// };
+module.exports = {
+    initStockFetchingService,
+    isStockSupported,
+    getStockPrice,    
+    updateStockPrice
+};
