@@ -86,7 +86,7 @@ pub enum Actions {
     RequestSinglePrice(InputSingleStockPrice),              // Query as single price
     RequestMultiplePrices(InputMultipleStockPrices), // Query multiple prices
     RequestCurrencyExchange(String, String, u128),
-    // RequestStockHistory(String, u128),
+    RequestStockHistory(String, u128),
     RequestExtraFundsReturn,
 
     // Owner Actions (Funds related)
@@ -101,7 +101,7 @@ pub enum Actions {
     SetMarketState(bool),                            // Set if the market is open
     SetCurrencyPrices(Vec<(String, u128)>),          // Set Currency actual prices
     SetRealTimePrices(Vec<(String, u128)>),          // Set Stocks actual prices
-    // SetHistoricalPrices(Vec<(String, Candle)>),      // Set Historical stock prices
+    SetHistoricalPrices(String, Vec<Candle>),      // Set Historical stock prices
 }
 
 
@@ -179,6 +179,7 @@ pub enum Query {
     SinglePriceRequiredFunds(InputSingleStockPrice),
     MultiplePriceRequiredFunds(InputMultipleStockPrices),
     CurrencyExchangeRequiredFunds,
+    StockHistoryRequiredFunds(u128),
     CheckExtraFunds(ActorId),
     CheckDecimalConst,
 
@@ -199,6 +200,7 @@ pub enum QueryReply {
     SinglePriceRequiredFunds(u128),     // How much should I deposit to request market state?
     MultiplePriceRequiredFunds(u128),   // How much should I deposit to request market state?
     CurrencyExchangeRequiredFunds(u128),
+    StockHistoryRequiredFunds(u128),
     CheckExtraFunds(u128),              // Check if have fund with the service
     CheckDecimalConst(u128),
 

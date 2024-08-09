@@ -1,6 +1,7 @@
 #![no_std]
 use gstd::{async_main, collections::HashMap, msg, prelude::*, ActorId};
 use io::*;
+use core::cmp::{min, max};
 
 // 1. Create the main state as a static variable.
 static mut STATE: Option<ProviderStruct> = None;
@@ -36,7 +37,7 @@ pub struct ProviderStruct {
     pub stock_real_time_prices: HashMap<String, u128>,
 
     // Historical Stock Prices (Very large)
-    pub stock_historical_prices: HashMap<String, Candle>,
+    pub stock_historical_prices: HashMap<String, Vec<Candle> >,
 
 }
 
@@ -267,6 +268,42 @@ impl ProviderStruct {
 
     }
 
+    fn request_stock_history(&mut self, stock: String, limit: u128) -> Result<Events, Errors> {
+
+        let actor_id = msg::source();
+        let transferred_value = msg::value();
+
+        let candles_limit = min(max(1, limit), 5000);
+        let required_fee: u128 = (self.fees_per_query / 5) as u128 * candles_limit;
+
+        if self.handle_transfer_funds(actor_id, transferred_value, required_fee) == false {
+            let extra_funds_entry = self.extra_funds_deposited.entry(actor_id).or_insert(transferred_value);
+            return Err(Errors::InsufficientFundsAttached{
+                required_founds: required_fee,
+                founds_on_your_account: *extra_funds_entry,
+            });
+        }
+
+        // Check if the symbol exists in stock_real_time_prices
+        let history: Vec<Candle> = match self.stock_historical_prices.get(&stock) {
+            Some(candles) => (*candles).clone(),
+            None => {
+                return Err(Errors::TickerSymbolNotFound{
+                    invalid_tickers: vec![stock]
+                });
+            }
+        };
+
+        let mut final_answer: Vec<Candle> = Vec::new();
+        for i in 0..candles_limit{
+            final_answer.push(history[i as usize].clone());
+        }
+
+        Ok(Events::SuccessfulStockHistoryRequest {
+            candles: final_answer
+        })
+    }
+
     fn request_refund(&mut self) -> Result<Events, Errors> {
 
         // Message Data
@@ -417,6 +454,16 @@ impl ProviderStruct {
         Ok(Events::RealTimePricesSetSuccessfully)
     }
 
+    fn set_historical_prices(&mut self, stock: String, history: Vec<Candle>) -> Result<Events, Errors> {
+        let caller = msg::source();
+        if !self.is_owner(caller) {
+            return Err(Errors::UnauthorizedAction);
+        }
+
+        self.stock_historical_prices.insert(stock, history);
+        Ok(Events::HistoricalPricesSetSuccessfully)
+    }
+
 }
 
 
@@ -457,7 +504,7 @@ async fn main() {
         Actions::RequestSinglePrice(input) => state.request_single_price(input),
         Actions::RequestMultiplePrices(input) => state.request_multiple_prices(input),
         Actions::RequestCurrencyExchange(input1,input2,input3) => state.request_currency_exchange(input1,input2,input3),
-        
+        Actions::RequestStockHistory(input1,input2) => state.request_stock_history(input1,input2),
         
         Actions::RequestExtraFundsReturn => state.request_refund(),
 
@@ -473,6 +520,7 @@ async fn main() {
         Actions::SetMarketState(input) => state.set_market_state(input),
         Actions::SetCurrencyPrices(input) => state.set_currencys_prices(input),
         Actions::SetRealTimePrices(input) => state.set_stocks_prices(input),
+        Actions::SetHistoricalPrices(input1, input2) => state.set_historical_prices(input1, input2),
 
 
     };
@@ -506,7 +554,8 @@ extern "C" fn state() {
             }
             QueryReply::MultiplePriceRequiredFunds(funds)
         },
-        Query::CurrencyExchangeRequiredFunds => QueryReply::MarketStateRequiredFunds(state.fees_per_query),
+        Query::CurrencyExchangeRequiredFunds => QueryReply::CurrencyExchangeRequiredFunds(state.fees_per_query),
+        Query::StockHistoryRequiredFunds(input) => QueryReply::StockHistoryRequiredFunds((state.fees_per_query / 5) as u128 * input),
         Query::CheckExtraFunds(actor_id) => {
             let extra_funds = state.extra_funds_deposited.get(&actor_id).cloned().unwrap_or(0);
             QueryReply::CheckExtraFunds(extra_funds)
