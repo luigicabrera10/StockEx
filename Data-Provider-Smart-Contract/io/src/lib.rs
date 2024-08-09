@@ -99,9 +99,18 @@ pub enum Actions {
     // Owner Actions (Data related)
     SetDecimalConst(u128),
     SetMarketState(bool),                            // Set if the market is open
+
     SetCurrencyPrices(Vec<(String, u128)>),          // Set Currency actual prices
+    UpdateCurrencyPrices(Vec<(String, u128)>),
+    DeleteCurrencyPrices(Vec<String>),
+
     SetRealTimePrices(Vec<(String, u128)>),          // Set Stocks actual prices
+    UpdateRealTimePrices(Vec<(String, u128)>),
+    DeleteRealTimePrices(Vec<String>),
+
     SetHistoricalPrices(String, Vec<Candle>),      // Set Historical stock prices
+    AddHistoricalPrices(String, Vec<Candle>),
+    DeleteHistoricalPrices(String, Vec<String>),    // By timestamp
 }
 
 
@@ -138,8 +147,16 @@ pub enum Events {
     SupportedStocksSetSuccessfully,
 
     CurrencyPricesSetSuccessfully,
+    CurrencyPricesUpdateSuccessfully,
+    CurrencyPricesDeletedSuccessfully,
+
     RealTimePricesSetSuccessfully,
+    RealTimePricesUpdateSuccessfully,
+    RealTimePricesDeletedSuccessfully,
+
     HistoricalPricesSetSuccessfully,
+    HistoricalPricesAddedSuccessfully,
+    HistoricalPricesDeletedSuccessfully,
            
 }
 
@@ -175,17 +192,25 @@ pub enum Query {
     // Oficial read States
     OwnerId,
     AuthorizedIds,
+
     MarketStateRequiredFunds,
     SinglePriceRequiredFunds(InputSingleStockPrice),
     MultiplePriceRequiredFunds(InputMultipleStockPrices),
     CurrencyExchangeRequiredFunds,
     StockHistoryRequiredFunds(u128),
+
+    SupportedCurrencys,
+    SupportedRealTimeStockPrices,
+    SupportedHistoricalStockPrices,
+
+    LastHistoricalUpdate(String),
+
     CheckExtraFunds(ActorId),
     CheckDecimalConst,
 
 
     // Debug read States
-    MarketState,
+    // MarketState,
 }
 
 // 8. Create your State Query Replys
@@ -196,15 +221,20 @@ pub enum QueryReply {
     // Oficial read States
     OwnerId(ActorId),                   // Who is the owner?
     AuthorizedIds(Vec<ActorId>),     // Witch Ids get no fees?
+
     MarketStateRequiredFunds(u128),     // How much should I deposit to request market state?
     SinglePriceRequiredFunds(u128),     // How much should I deposit to request market state?
     MultiplePriceRequiredFunds(u128),   // How much should I deposit to request market state?
     CurrencyExchangeRequiredFunds(u128),
     StockHistoryRequiredFunds(u128),
+
+    SupportedCurrencys(Vec<String>),
+    SupportedRealTimeStockPrices(Vec<String>),
+    SupportedHistoricalStockPrices(Vec<String>),
+
+    LastHistoricalUpdate(String),
+
     CheckExtraFunds(u128),              // Check if have fund with the service
     CheckDecimalConst(u128),
 
-    // Debug read States
-    MarketState(bool),                  // The market state?   
- 
 }

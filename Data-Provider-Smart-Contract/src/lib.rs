@@ -147,7 +147,6 @@ impl ProviderStruct {
         })
     }
 
-    
     fn request_multiple_prices(&mut self, request_query: InputMultipleStockPrices) -> Result<Events, Errors> {
         
         let actor_id = msg::source();
@@ -428,7 +427,23 @@ impl ProviderStruct {
         Ok(Events::MarketStateSetSuccessfully)
     }
 
+
+
     fn set_currencys_prices(&mut self, currencys: Vec<(String, u128)>) -> Result<Events, Errors> {
+        let caller = msg::source();
+        if !self.is_owner(caller) {
+            return Err(Errors::UnauthorizedAction);
+        }
+
+        self.currency_prices.clear();
+        for (currency, price) in currencys {
+            self.currency_prices.insert(currency, price);
+        }
+
+        Ok(Events::CurrencyPricesSetSuccessfully)
+    }
+
+    fn update_currencys_prices(&mut self, currencys: Vec<(String, u128)>) -> Result<Events, Errors> {
         let caller = msg::source();
         if !self.is_owner(caller) {
             return Err(Errors::UnauthorizedAction);
@@ -438,10 +453,38 @@ impl ProviderStruct {
             self.currency_prices.insert(currency, price);
         }
 
-        Ok(Events::CurrencyPricesSetSuccessfully)
+        Ok(Events::CurrencyPricesUpdateSuccessfully)
     }
 
+    fn delete_currencys_prices(&mut self, currencys: Vec<String>) -> Result<Events, Errors> {
+        let caller = msg::source();
+        if !self.is_owner(caller) {
+            return Err(Errors::UnauthorizedAction);
+        }
+
+        for currency in currencys {
+            self.currency_prices.remove(&currency);
+        }
+
+        Ok(Events::CurrencyPricesDeletedSuccessfully)
+    }
+
+
     fn set_stocks_prices(&mut self, stocks: Vec<(String, u128)>) -> Result<Events, Errors> {
+        let caller = msg::source();
+        if !self.is_owner(caller) {
+            return Err(Errors::UnauthorizedAction);
+        }
+
+        self.stock_real_time_prices.clear();
+        for (stock, price) in stocks {
+            self.stock_real_time_prices.insert(stock, price);
+        }
+
+        Ok(Events::RealTimePricesSetSuccessfully)
+    }
+
+    fn update_stocks_prices(&mut self, stocks: Vec<(String, u128)>) -> Result<Events, Errors> {
         let caller = msg::source();
         if !self.is_owner(caller) {
             return Err(Errors::UnauthorizedAction);
@@ -451,8 +494,22 @@ impl ProviderStruct {
             self.stock_real_time_prices.insert(stock, price);
         }
 
-        Ok(Events::RealTimePricesSetSuccessfully)
+        Ok(Events::RealTimePricesUpdateSuccessfully)
     }
+
+    fn delete_stocks_prices(&mut self, stocks: Vec<String>) -> Result<Events, Errors> {
+        let caller = msg::source();
+        if !self.is_owner(caller) {
+            return Err(Errors::UnauthorizedAction);
+        }
+
+        for stock in stocks {
+            self.stock_real_time_prices.remove(&stock);
+        }
+
+        Ok(Events::RealTimePricesDeletedSuccessfully)
+    }
+
 
     fn set_historical_prices(&mut self, stock: String, history: Vec<Candle>) -> Result<Events, Errors> {
         let caller = msg::source();
@@ -462,6 +519,43 @@ impl ProviderStruct {
 
         self.stock_historical_prices.insert(stock, history);
         Ok(Events::HistoricalPricesSetSuccessfully)
+    }
+
+    fn add_historical_prices(&mut self, stock: String, history: Vec<Candle>) -> Result<Events, Errors> {
+        let caller = msg::source();
+        if !self.is_owner(caller) {
+            return Err(Errors::UnauthorizedAction);
+        }
+    
+        // Get the current history if it exists, otherwise use an empty Vec
+        let current_history = self.stock_historical_prices.entry(stock.clone()).or_insert_with(Vec::new);
+    
+        // Add the new candles at the start of the current history
+        let mut new_history = history;
+        new_history.extend(current_history.iter().cloned());  // Append the existing history at the end
+        *current_history = new_history;  // Replace the history
+    
+        Ok(Events::HistoricalPricesAddedSuccessfully)
+    }
+
+    fn delete_historical_prices(&mut self, stock: String, datetimes: Vec<String>) -> Result<Events, Errors> {
+        let caller = msg::source();
+        if !self.is_owner(caller) {
+            return Err(Errors::UnauthorizedAction);
+        }
+    
+        // Check if the stock exists in the map
+        if let Some(current_history) = self.stock_historical_prices.get_mut(&stock) {
+    
+            // Retain only those candles whose datetime is not in the provided list
+            current_history.retain(|candle| !datetimes.contains(&candle.datetime));
+    
+            Ok(Events::HistoricalPricesDeletedSuccessfully)
+        } else {
+            Err(Errors::TickerSymbolNotFound{
+                invalid_tickers: vec![stock]
+            })
+        }
     }
 
 }
@@ -518,9 +612,18 @@ async fn main() {
         // Owner actions (Data Related)
         Actions::SetDecimalConst(input) => state.set_decimals_const(input),
         Actions::SetMarketState(input) => state.set_market_state(input),
+
         Actions::SetCurrencyPrices(input) => state.set_currencys_prices(input),
+        Actions::UpdateCurrencyPrices(input) => state.update_currencys_prices(input),
+        Actions::DeleteCurrencyPrices(input) => state.delete_currencys_prices(input),
+
         Actions::SetRealTimePrices(input) => state.set_stocks_prices(input),
+        Actions::UpdateRealTimePrices(input) => state.update_stocks_prices(input),
+        Actions::DeleteRealTimePrices(input) => state.delete_stocks_prices(input),
+
         Actions::SetHistoricalPrices(input1, input2) => state.set_historical_prices(input1, input2),
+        Actions::AddHistoricalPrices(input1, input2) => state.add_historical_prices(input1, input2),
+        Actions::DeleteHistoricalPrices(input1, input2) => state.delete_historical_prices(input1, input2),
 
 
     };
@@ -536,6 +639,8 @@ extern "C" fn state() {
     let reply = match query {
         Query::OwnerId => QueryReply::OwnerId(state.owner),
         Query::AuthorizedIds => QueryReply::AuthorizedIds(state.fee_free_ids.clone()),
+        
+
         Query::MarketStateRequiredFunds => QueryReply::MarketStateRequiredFunds(state.fees_per_query),
         Query::SinglePriceRequiredFunds(input) => {
             let mut funds = state.fees_per_query*2;
@@ -556,12 +661,38 @@ extern "C" fn state() {
         },
         Query::CurrencyExchangeRequiredFunds => QueryReply::CurrencyExchangeRequiredFunds(state.fees_per_query),
         Query::StockHistoryRequiredFunds(input) => QueryReply::StockHistoryRequiredFunds((state.fees_per_query / 5) as u128 * input),
+        
+        Query::SupportedCurrencys => {
+            let supported_currencys: Vec<String> = state.currency_prices.keys().cloned().collect();
+            QueryReply::SupportedCurrencys(supported_currencys)
+        } 
+        Query::SupportedRealTimeStockPrices => {
+            let supported_stocks: Vec<String> = state.stock_real_time_prices.keys().cloned().collect();
+            QueryReply::SupportedRealTimeStockPrices(supported_stocks)
+        } 
+        Query::SupportedHistoricalStockPrices => {
+            let supported_stocks: Vec<String> = state.stock_historical_prices.keys().cloned().collect();
+            QueryReply::SupportedHistoricalStockPrices(supported_stocks)
+        } 
+        
+        Query::LastHistoricalUpdate(input) => {
+            if let Some(current_history) = state.stock_historical_prices.get(&input) {
+                if let Some(first_candle) = current_history.first() {
+                    QueryReply::LastHistoricalUpdate(first_candle.datetime.clone())
+                } else {
+                    QueryReply::LastHistoricalUpdate("null".to_string())
+                }
+            } else {
+                QueryReply::LastHistoricalUpdate("null".to_string())
+            }
+        } 
+        
         Query::CheckExtraFunds(actor_id) => {
             let extra_funds = state.extra_funds_deposited.get(&actor_id).cloned().unwrap_or(0);
             QueryReply::CheckExtraFunds(extra_funds)
         },
         Query::CheckDecimalConst => QueryReply::CheckDecimalConst(state.decimal_const),
-        Query::MarketState => QueryReply::MarketState(state.market_state),
+
     };
 
     msg::reply(reply, 0).expect("Error on sharing state");
