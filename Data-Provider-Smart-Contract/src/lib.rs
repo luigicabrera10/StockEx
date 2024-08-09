@@ -1,12 +1,6 @@
 #![no_std]
 use gstd::{async_main, collections::HashMap, msg, prelude::*, ActorId};
 use io::*;
-// use parity_scale_codec::{Decode, Encode};
-
-// use serde_json::Value;
-// use serde_json::json;
-// use serde_json;
-// use serde::{Deserialize, Serialize};
 
 // 1. Create the main state as a static variable.
 static mut STATE: Option<ProviderStruct> = None;
@@ -15,21 +9,41 @@ static mut STATE: Option<ProviderStruct> = None;
 #[derive(Clone, Default)]
 pub struct ProviderStruct {
 
+    // Structures for handling founds collecting
+
     pub owner: ActorId,                 // Add owner field
     pub fees_per_query: u128,           // How much vara does it cost to do a query?
     pub collected_funds: u128,          // How many funts have we collected?
-    pub fee_free_ids: Vec<ActorId>,  // What ids do not pay fees?
-    pub market_state: bool,             // Is the market open?
+    pub fee_free_ids: Vec<ActorId>,     // What ids do not pay fees?
 
     // Extra funts deposited are stored here, used for future querys and returned if requested
     pub extra_funds_deposited: HashMap<ActorId, u128>,
+
+    // ----------------------------------------------------------------
+    // Structures for Data Storing on Contract State:
+
+    // Decimal precisition saved as integer
+    // Real values are obtaines dividin with 10 ** (decimals)
+    pub decimal_const: u128,
+
+    // Real time currency prices
+    pub currency_prices: HashMap<String, u128>,
+
+    // Is the market open?
+    pub market_state: bool, // 0 = closed, 1 = open
+
+    // Real Time stock Prices
+    pub stock_real_time_prices: HashMap<String, u128>,
+
+    // Historical Stock Prices (Very large)
+    pub stock_historical_prices: HashMap<String, Candle>,
 
 }
 
 // Create a implementation on State
 impl ProviderStruct {
 
-    fn handle_transfer_funds(&mut self, actor_id: ActorId, mut value: u128, query_fee: u128) -> Result<bool, Errors> {
+    fn handle_transfer_funds(&mut self, actor_id: ActorId, mut value: u128, query_fee: u128) -> bool {
 
         // Create a reference to the entry for actor_id in extra_funds_deposited
         let extra_funds_entry = self.extra_funds_deposited.entry(actor_id).or_insert(0);
@@ -55,16 +69,14 @@ impl ProviderStruct {
                     self.collected_funds += query_fee;
                 } else {
                     *extra_funds_entry += value; // Save the transferred value
-                    return Err(Errors::InsufficientFundsAttached);
+                    return false
                 }
-
             }
 
         } else { // actor_id does not pay fees so value is stored
             *extra_funds_entry += value; // May be 0
         }
-
-        Ok(true)
+        return true
     }
 
     fn request_market_state(&mut self) -> Result<Events, Errors> {
@@ -74,208 +86,186 @@ impl ProviderStruct {
         let transferred_value = msg::value();
 
         // Handle the transfer of funds
-        if self.handle_transfer_funds(actor_id, transferred_value, self.fees_per_query).is_err() {
-            return Err(Errors::InsufficientFundsAttached);
+        if self.handle_transfer_funds(actor_id, transferred_value, self.fees_per_query) == false {
+            let extra_funds_entry = self.extra_funds_deposited.entry(actor_id).or_insert(transferred_value);
+            return Err(Errors::InsufficientFundsAttached{
+                required_founds: self.fees_per_query,
+                founds_on_your_account: *extra_funds_entry,
+            });
         }
-
-        msg::reply(
-            self.market_state,
-            0,
-        )
-        .map_err(|_| Errors::UnableToReply)?;
 
         Ok(Events::SuccessfulStateRequest { market_state: self.market_state } )
     }
 
-    /*
-    async fn request_single_price(&mut self, request_query: InputSingleStockPrice) -> Result<Events, Errors> {
-        // Message Data
-        let actor_id = msg::source();
-        let transferred_value = msg::value();
-
-        // Handle the transfer of funds
-        if self.handle_transfer_funds(actor_id, transferred_value, self.fees_per_query * 2).is_err() {
-            return Err(Errors::InsufficientFundsAttached)
-        }
-
-        // Encode the payload
-        let encoded_request = RequestDataProvider::RequestSingleStockPrice {
-            symbol: request_query.symbol.clone(),
-            currency: request_query.currency.clone(),
-        }.encode();
-
-        // Send the message and await the reply
-        let future = msg::send_for_reply_as::<Vec<u8>, ReplySingleStockPrice>(
-            self.owner,
-            //request_query.clone(),
-            encoded_request,
-            0,
-            100000000,
-        )
-        .map_err(|_| Errors::UnableToSendMessageToService)?;
-    
-        let reply: ReplySingleStockPrice = future.await.expect("Unable to receive reply");
-
-        msg::reply(
-            reply.clone(),
-            0,
-        )
-        .map_err(|_| Errors::UnableToReply)?;
-
-
-        self.market_state = reply.market_state;
-
-        Ok(Events::SuccessfulSinglePriceRequest {
-            market_state: self.market_state,
-            price: reply.price,
-        })
-
-    }*/
-
-    // Manually create JSON for SingleStockPriceRequest
-    async fn request_single_price(&mut self, request_query: InputSingleStockPrice) -> Result<Events, Errors> {
-        let actor_id = msg::source();
-        let transferred_value = msg::value();
-
-        // Handle the transfer of funds
-        if self.handle_transfer_funds(actor_id, transferred_value, self.fees_per_query * 2).is_err() {
-            return Err(Errors::InsufficientFundsAttached);
-        }
-
-        // Create JSON string for the request
-        let request_payload = format!(
-            r#"{{"SingleStockPrice": {{"symbol": "{}", "currency": "{}"}}}}"#,
-            request_query.symbol,
-            request_query.currency
-        );
-
-        // Send the message and await the reply
-        let future = msg::send_for_reply_as::<String, String>(
-            self.owner,
-            request_payload,
-            0,
-            100000000,
-        ).map_err(|_| Errors::UnableToSendMessageToService)?;
-
-        let reply: String = future.await.expect("Unable to receive reply");
-
-        // Manually decode JSON string for the reply
-        let market_state = reply.contains("\"marketState\": 1");
-        let price_start = reply.find("\"price\": ").ok_or(Errors::UnableToDecodeReply)? + 9;
-        let price_end = reply[price_start..].find('}').unwrap_or(reply.len());
-        let stock_price: u128 = reply[price_start..price_end].parse().map_err(|_| Errors::UnableToDecodeReply)?;
-
-        // Reply to the message
-        msg::reply(ReplySingleStockPrice{
-            market_state: market_state.clone(),
-            price: stock_price.clone(),
-        }, 0).map_err(|_| Errors::UnableToReply)?;
-
-        self.market_state = market_state;
-
-        Ok(Events::SuccessfulSinglePriceRequest {
-            market_state: self.market_state.clone(),
-            price: stock_price.clone(),
-        })
-    }
-
-    /*
-    async fn request_multiple_prices(&mut self, request_query: InputMultipleStockPrice) -> Result<Events, Errors> {
-        // Message Data
-        let actor_id = msg::source();
-        let transferred_value = msg::value();
-
-        let cost_size = request_query.symbols_pairs.len() as u128;
-
-        // Handle the transfer of funds
-        if self.handle_transfer_funds(actor_id, transferred_value, self.fees_per_query * (cost_size + 1)).is_err() {
-            return Err(Errors::InsufficientFundsAttached)
-        }
-
-        // Send the message and await the reply
-        let future = msg::send_for_reply_as::<RequestDataProvider, ReplyMultipleStockPrice>(
-            self.owner,
-            //request_query.clone(),
-            RequestDataProvider::RequestMultipleStockPrice{
-                symbols_pairs: request_query.symbols_pairs.clone(),
-            },
-            0,
-            100000000,
-        )
-        .map_err(|_| Errors::UnableToSendMessageToService)?;
-    
-        let reply: ReplyMultipleStockPrice = future.await.expect("Unable to receive reply");
-
-        msg::reply(
-            reply.clone(),
-            0,
-        )
-        .map_err(|_| Errors::UnableToReply)?;
-
-        self.market_state = reply.market_state;
-
-        Ok(Events::SuccessfulMultiplePriceRequest {
-            market_state: self.market_state,
-            prices: reply.prices,
-        })
-
-    }*/
-
-    // Manually create JSON for MultipleStockPriceRequest
-    async fn request_multiple_prices(&mut self, request_query: InputMultipleStockPrice) -> Result<Events, Errors> {
+    fn request_single_price(&mut self, request_query: InputSingleStockPrice) -> Result<Events, Errors> {
         
         let actor_id = msg::source();
         let transferred_value = msg::value();
+        let symbol = request_query.symbol;
+        let currency = request_query.currency;
 
-        let cost_size = request_query.symbols_pairs.len() as u128;
-
-        // Handle the transfer of funds
-        if self.handle_transfer_funds(actor_id, transferred_value, self.fees_per_query * (cost_size + 1)).is_err() {
-            return Err(Errors::InsufficientFundsAttached);
+        let mut required_fee = self.fees_per_query*2;
+        if currency != "USD".to_string() {
+            required_fee += self.fees_per_query;
         }
 
-        // Create JSON string for the request
-        let symbols_pairs_str: Vec<String> = request_query.symbols_pairs.iter()
-            .map(|(symbol, currency)| format!(r#"["{}", "{}"]"#, symbol, currency))
-            .collect();
-        let request_payload = format!(
-            r#"{{"MultipleStockPrice": [{}]}}"#,
-            symbols_pairs_str.join(", ")
-        );
+        // Handle the transfer of funds
+        if self.handle_transfer_funds(actor_id, transferred_value, required_fee) == false {
+            let extra_funds_entry = self.extra_funds_deposited.entry(actor_id).or_insert(transferred_value);
+            return Err(Errors::InsufficientFundsAttached{
+                required_founds: required_fee,
+                founds_on_your_account: *extra_funds_entry,
+            });
+        }
 
-        // Send the message and await the reply
-        let future = msg::send_for_reply_as::<String, String>(
-            self.owner,
-            request_payload,
-            0,
-            100000000,
-        ).map_err(|_| Errors::UnableToSendMessageToService)?;
+        // Check if the symbol exists in stock_real_time_prices
+        let stock_price: u128 = match self.stock_real_time_prices.get(&symbol) {
+            Some(price) => *price,
+            None => {
+                return Err(Errors::TickerSymbolNotFound{
+                    invalid_tickers: vec![symbol]
+                });
+            }
+        };
 
-        let reply: String = future.await.expect("Unable to receive reply");
+        // Check if the currency exists in currency_prices
+        let currency_price: u128 = match self.currency_prices.get(&currency) {
+            Some(currency_price) => *currency_price,
+            None => {
+                return Err(Errors::CurrencySymbolNotFound{
+                    invalid_currencys: vec![currency]
+                });
+            }
+        };
+        
+        let final_price: u128 = (stock_price * (currency_price / self.decimal_const)) as u128;
 
-        // Manually decode JSON string for the reply
-        let market_state = reply.contains("\"marketState\": 1");
-        let prices_start = reply.find("\"prices\": [").ok_or(Errors::UnableToDecodeReply)? + 11;
-        let prices_end = reply.find(']').ok_or(Errors::UnableToDecodeReply)?;
-        let prices_str = &reply[prices_start..prices_end];
-        let stock_prices: Vec<u128> = prices_str.split(',')
-            .map(|s| s.trim().parse().map_err(|_| Errors::UnableToDecodeReply))
-            .collect::<Result<_, _>>()?;
-
-        // Reply to the message
-        msg::reply(ReplyMultipleStockPrice{
-            market_state: market_state.clone(),
-            prices: stock_prices.clone(),
-        }, 0).map_err(|_| Errors::UnableToReply)?;
-
-        self.market_state = market_state;
-
-        Ok(Events::SuccessfulMultiplePriceRequest {
+        Ok(Events::SuccessfulSinglePriceRequest {
             market_state: self.market_state.clone(),
-            prices: stock_prices.clone(),
+            price: final_price,
         })
     }
 
+    
+    fn request_multiple_prices(&mut self, request_query: InputMultipleStockPrices) -> Result<Events, Errors> {
+        
+        let actor_id = msg::source();
+        let transferred_value = msg::value();
+    
+        let cost_size = request_query.symbols_pairs.len() as u128;
+        let mut required_fee = self.fees_per_query * (cost_size + 1);
+        
+        for (_stock, currency) in &request_query.symbols_pairs {
+            if currency != "USD" {
+                required_fee += self.fees_per_query;
+            }
+        }
+    
+        // Handle the transfer of funds
+        if !self.handle_transfer_funds(actor_id, transferred_value, required_fee) {
+            let extra_funds_entry = self.extra_funds_deposited.entry(actor_id).or_insert(transferred_value);
+            return Err(Errors::InsufficientFundsAttached{
+                required_founds: required_fee,
+                founds_on_your_account: *extra_funds_entry,
+            });
+        }
+    
+        let mut invalid_stocks: Vec<String> = Vec::new();
+        let mut invalid_currencys: Vec<String> = Vec::new();
+        let mut stock_prices: Vec<u128> = Vec::new();
+    
+        for (stock, currency) in request_query.symbols_pairs {
+
+            // Check if the stock exists in stock_real_time_prices
+            let stock_price: u128   = match self.stock_real_time_prices.get(&stock) {
+                Some(price) => *price,
+                None => {
+                    invalid_stocks.push(stock.clone());
+                    continue; // Skip this pair and move to the next
+                }
+            };
+    
+            // Check if the currency exists in currency_prices
+            let currency_price: u128  = match self.currency_prices.get(&currency) {
+                Some(currency_price) => *currency_price,
+                None => {
+                    invalid_currencys.push(currency.clone());
+                    continue; // Skip this pair and move to the next
+                }
+            };
+    
+            // Calculate the final price in the requested currency
+            // let final_price = stock_price * currency_price;
+            let final_price: u128 = (stock_price * (currency_price / self.decimal_const)) as u128;
+            stock_prices.push(final_price);
+        }
+    
+        // Return errors if any invalid stocks or currencies were found
+        if !invalid_stocks.is_empty() {
+            return Err(Errors::TickerSymbolNotFound {
+                invalid_tickers: invalid_stocks,
+            });
+        }
+    
+        if !invalid_currencys.is_empty() {
+            return Err(Errors::CurrencySymbolNotFound {
+                invalid_currencys: invalid_currencys,
+            });
+        }
+    
+        // Return the successful response with the market state and calculated prices
+        Ok(Events::SuccessfulMultiplePriceRequest {
+            market_state: self.market_state.clone(),
+            prices: stock_prices,
+        })
+    }
+
+    fn request_currency_exchange(&mut self, currency1: String, currency2: String, value: u128) -> Result<Events, Errors> {
+        let actor_id = msg::source();
+        let transferred_value = msg::value();
+
+        if self.handle_transfer_funds(actor_id, transferred_value, self.fees_per_query) == false {
+            let extra_funds_entry = self.extra_funds_deposited.entry(actor_id).or_insert(transferred_value);
+            return Err(Errors::InsufficientFundsAttached{
+                required_founds: self.fees_per_query,
+                founds_on_your_account: *extra_funds_entry,
+            });
+        }
+
+        let mut invalid_currencys: Vec<String> = Vec::new();
+
+        // Check if the currency exists in currency_prices
+        let currency1_price: u128  = match self.currency_prices.get(&currency1) {
+            Some(price) => *price,
+            None => {
+                invalid_currencys.push(currency1.clone());
+                0
+            }
+        };
+
+        // Check if the currency exists in currency_prices
+        let currency2_price: u128  = match self.currency_prices.get(&currency2) {
+            Some(price) => *price,
+            None => {
+                invalid_currencys.push(currency2.clone());
+                0
+            }
+        };
+
+        // Error if invalid currency is found
+        if !invalid_currencys.is_empty() {
+            return Err(Errors::CurrencySymbolNotFound {
+                invalid_currencys: invalid_currencys,
+            });
+        }
+
+        let final_price: u128 = ((value * self.decimal_const * currency2_price) / currency1_price) as u128;
+
+        Ok(Events::SuccessfulCurrencyExchangeRequest{ 
+            price: final_price
+        })
+
+    }
 
     fn request_refund(&mut self) -> Result<Events, Errors> {
 
@@ -293,29 +283,22 @@ impl ProviderStruct {
 
         if total_to_refund > 0 {
             msg::send(actor_id, (), total_to_refund).expect("Failed to transfer funds");
-            Ok(Events::RefundCompleted)
+            Ok(Events::RefundCompleted{
+                funds: total_to_refund,
+                account: actor_id
+            })
         } else {
             Err(Errors::NotExtraFundsWhereFound)
         }
     }
 
 
-    // OWNER ACTIONS:
+    // OWNER ACTIONS (FUNDS RELATED): -------------------------------------------------
 
 
     // Check if the caller is the owner
     fn is_owner(&self, caller: ActorId) -> bool {
         caller == self.owner
-    }
-
-    // Set market state (only owner)
-    fn set_market_state(&mut self, new_state: bool) -> Result<Events, Errors> {
-        let caller = msg::source();
-        if !self.is_owner(caller) {
-            return Err(Errors::UnauthorizedAction);
-        }
-        self.market_state = new_state;
-        Ok(Events::MarketStateSetSuccessfully)
     }
 
     // Set fees per query (only owner)
@@ -325,7 +308,9 @@ impl ProviderStruct {
             return Err(Errors::UnauthorizedAction);
         }
         self.fees_per_query = new_fees;
-        Ok(Events::FeesSetSuccessfully)
+        Ok(Events::FeesSetSuccessfully{
+            new_fee: self.fees_per_query.clone()
+        })
     }
 
     // Add authorized ID (only owner)
@@ -335,7 +320,9 @@ impl ProviderStruct {
             return Err(Errors::UnauthorizedAction);
         }
         self.fee_free_ids.push(new_id);
-        Ok(Events::IdAddedSuccesfully)
+        Ok(Events::IdAddedSuccesfully{
+            new_actor_id: new_id
+        })
     }
 
     // Remove authorized ID (only owner)
@@ -346,7 +333,9 @@ impl ProviderStruct {
         }
         if let Some(index) = self.fee_free_ids.iter().position(|&id| id == id_to_delete) {
             self.fee_free_ids.remove(index);
-            Ok(Events::AuthorizedIdDeleted)
+            Ok(Events::IdDeletedSuccesfully{
+                deleted_actor_id: id_to_delete
+            })
         } else {
             Err(Errors::IdNotFound) // If ID not found, return UnauthorizedAction
         }
@@ -362,7 +351,10 @@ impl ProviderStruct {
         self.collected_funds = 0; // Reset collected funds
         // Perform the actual transfer to the owner
         msg::send(self.owner, (), funds_to_deposit).expect("Failed to transfer funds to owner");
-        Ok(Events::FuntsDepositedSuccessfully)
+        Ok(Events::FuntsDepositedSuccessfully{
+            funds: funds_to_deposit,
+            account: self.owner
+        })
     }
 
     // Set new owner (only owner)
@@ -374,9 +366,56 @@ impl ProviderStruct {
             return Err(Errors::UnauthorizedAction);
         }
         self.owner = new_owner;
-        Ok(Events::NewOwnerSetSuccesfully)
+        Ok(Events::NewOwnerSetSuccesfully{
+            new_owner: self.owner
+        })
     }
 
+    // OWNER ACTIONS (DATA RELATED): -------------------------------------------------
+
+    fn set_decimals_const(&mut self, new_decimals: u128) -> Result<Events, Errors> {
+        let caller = msg::source();
+        if !self.is_owner(caller) {
+            return Err(Errors::UnauthorizedAction);
+        }
+        self.decimal_const = new_decimals;
+        Ok(Events::DecimalsSetSuccessfully{ new_decimals: self.decimal_const })
+    }
+
+    fn set_market_state(&mut self, new_state: bool) -> Result<Events, Errors> {
+        let caller = msg::source();
+        if !self.is_owner(caller) {
+            return Err(Errors::UnauthorizedAction);
+        }
+        self.market_state = new_state;
+        Ok(Events::MarketStateSetSuccessfully)
+    }
+
+    fn set_currencys_prices(&mut self, currencys: Vec<(String, u128)>) -> Result<Events, Errors> {
+        let caller = msg::source();
+        if !self.is_owner(caller) {
+            return Err(Errors::UnauthorizedAction);
+        }
+
+        for (currency, price) in currencys {
+            self.currency_prices.insert(currency, price);
+        }
+
+        Ok(Events::CurrencyPricesSetSuccessfully)
+    }
+
+    fn set_stocks_prices(&mut self, stocks: Vec<(String, u128)>) -> Result<Events, Errors> {
+        let caller = msg::source();
+        if !self.is_owner(caller) {
+            return Err(Errors::UnauthorizedAction);
+        }
+
+        for (stock, price) in stocks {
+            self.stock_real_time_prices.insert(stock, price);
+        }
+
+        Ok(Events::RealTimePricesSetSuccessfully)
+    }
 
 }
 
@@ -392,6 +431,7 @@ extern "C" fn init() {
         owner: config.data_provider_owner,      // Initialize the owner field
         fees_per_query: config.fees,  // 0.5 Vara 
         collected_funds: 0,
+        decimal_const: 1000000000,
         ..Default::default()
     };
 
@@ -414,17 +454,26 @@ async fn main() {
 
         // Public Actions
         Actions::RequestMarketState => state.request_market_state(),
-        Actions::RequestSinglePrice(input) => state.request_single_price(input).await,
-        Actions::RequestMultiplePrices(input) => state.request_multiple_prices(input).await,
+        Actions::RequestSinglePrice(input) => state.request_single_price(input),
+        Actions::RequestMultiplePrices(input) => state.request_multiple_prices(input),
+        Actions::RequestCurrencyExchange(input1,input2,input3) => state.request_currency_exchange(input1,input2,input3),
+        
+        
         Actions::RequestExtraFundsReturn => state.request_refund(),
 
-        // Owner actions
-        Actions::SetMarketState(input) => state.set_market_state(input),
+        // Owner actions (Funds related)
         Actions::SetFees(input) => state.set_fees(input),
         Actions::SetAuthorizedId(input) => state.set_authorized_id(input),
         Actions::DeleteAuthorizedId(input) => state.delete_authorized_id(input),
         Actions::DepositFoundsToOwner => state.deposit_funds_to_owner(),
         Actions::SetNewOwner(input) => state.set_new_owner(input),
+
+        // Owner actions (Data Related)
+        Actions::SetDecimalConst(input) => state.set_decimals_const(input),
+        Actions::SetMarketState(input) => state.set_market_state(input),
+        Actions::SetCurrencyPrices(input) => state.set_currencys_prices(input),
+        Actions::SetRealTimePrices(input) => state.set_stocks_prices(input),
+
 
     };
     msg::reply(reply, 0).expect("Error in sending a reply");
@@ -433,19 +482,36 @@ async fn main() {
 // 5. Create the state() function of your contract.
 #[no_mangle]
 extern "C" fn state() {
-    let state = unsafe { STATE.take().expect("Unexpected error in taking state") };
+    let state = unsafe { STATE.as_ref().expect("Unexpected error in taking state") };
     let query: Query = msg::load().expect("Unable to decode the query");
 
     let reply = match query {
         Query::OwnerId => QueryReply::OwnerId(state.owner),
         Query::AuthorizedIds => QueryReply::AuthorizedIds(state.fee_free_ids.clone()),
         Query::MarketStateRequiredFunds => QueryReply::MarketStateRequiredFunds(state.fees_per_query),
-        Query::SinglePriceRequiredFunds => QueryReply::SinglePriceRequiredFunds(state.fees_per_query*2),
-        Query::MultiplePriceRequiredFunds(num_prices) => QueryReply::MultiplePriceRequiredFunds((num_prices+1) * state.fees_per_query),
+        Query::SinglePriceRequiredFunds(input) => {
+            let mut funds = state.fees_per_query*2;
+            if input.currency != "USD".to_string() {
+                funds += state.fees_per_query;
+            }
+            QueryReply::SinglePriceRequiredFunds(funds)
+        },
+        Query::MultiplePriceRequiredFunds(input) => {
+            let cost_size = input.symbols_pairs.len() as u128;
+            let mut funds = state.fees_per_query*(cost_size+1);
+            for (_stock, currency) in input.symbols_pairs {
+                if currency != "USD".to_string() {
+                    funds += state.fees_per_query;
+                }
+            }
+            QueryReply::MultiplePriceRequiredFunds(funds)
+        },
+        Query::CurrencyExchangeRequiredFunds => QueryReply::MarketStateRequiredFunds(state.fees_per_query),
         Query::CheckExtraFunds(actor_id) => {
             let extra_funds = state.extra_funds_deposited.get(&actor_id).cloned().unwrap_or(0);
             QueryReply::CheckExtraFunds(extra_funds)
-        }
+        },
+        Query::CheckDecimalConst => QueryReply::CheckDecimalConst(state.decimal_const),
         Query::MarketState => QueryReply::MarketState(state.market_state),
     };
 

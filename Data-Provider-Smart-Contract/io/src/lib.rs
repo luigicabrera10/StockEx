@@ -15,7 +15,7 @@ impl Metadata for ProgramMetadata {
     type State = InOut<Query, QueryReply>;
 }
 
-// 2. Create your init Struct(Optional)
+// 2. Create your init Struct
 #[derive(Decode, Encode, TypeInfo)]
 #[codec(crate = gstd::codec)]
 #[scale_info(crate = gstd::scale_info)]
@@ -23,6 +23,20 @@ pub struct InitStruct {
     pub data_provider_owner: ActorId,  // Add owner field
     pub fees: u128,
 }
+
+// Custom Structs
+#[derive(Debug, Decode, Encode,  Clone, TypeInfo)]
+#[codec(crate = gstd::codec)]
+#[scale_info(crate = gstd::scale_info)]
+pub struct Candle {
+    pub datetime: String,
+    pub open: u128,
+    pub high: u128,
+    pub low: u128,
+    pub close: u128,
+    pub volume: u128,
+}
+
 
 // Custom input Structure for receive Single Price Request
 #[derive(Debug, Decode, Encode,  Clone, TypeInfo)]
@@ -47,7 +61,7 @@ pub struct ReplySingleStockPrice {
 #[derive(Debug, Decode, Encode,  Clone, TypeInfo)]
 #[codec(crate = gstd::codec)]
 #[scale_info(crate = gstd::scale_info)]
-pub struct InputMultipleStockPrice {
+pub struct InputMultipleStockPrices {
     pub symbols_pairs: Vec<(String, String)>,
 }
 
@@ -61,75 +75,95 @@ pub struct ReplyMultipleStockPrice {
 }
 
 
-#[derive(Encode, Decode, TypeInfo, Debug, PartialEq, Eq)]
-pub enum RequestDataProvider {
-    RequestSingleStockPrice {
-        symbol: String,
-        currency: String,
-    },
-    RequestMultipleStockPrice {
-        symbols_pairs: Vec<(String, String)>,
-    },
-}
-
-
 // 3. Create your own Actions
 #[derive(Debug, Decode, Encode, TypeInfo)]
 #[codec(crate = gstd::codec)]
 #[scale_info(crate = gstd::scale_info)]
 pub enum Actions {
-    // Add Public Actions
+
+    // Public Actions
     RequestMarketState,                              // Query if market is open
     RequestSinglePrice(InputSingleStockPrice),              // Query as single price
-    RequestMultiplePrices(InputMultipleStockPrice), // Query multiple prices
+    RequestMultiplePrices(InputMultipleStockPrices), // Query multiple prices
+    RequestCurrencyExchange(String, String, u128),
+    // RequestStockHistory(String, u128),
     RequestExtraFundsReturn,
 
-    // Owner Actions
-    SetMarketState(bool),                            // Set if the market is open
+    // Owner Actions (Funds related)
     SetFees(u128),                                   // Set how much should pay per request
     SetAuthorizedId(ActorId),                        // Set ids that dont need to pay fees (Privileged apps/users)
     DeleteAuthorizedId(ActorId),                     // Delete ids to pay fees 
     DepositFoundsToOwner,                            // Deposit collected funds to the owner         
-    SetNewOwner(ActorId),                                     // Change the owner
+    SetNewOwner(ActorId),                            // Change the owner
+
+    // Owner Actions (Data related)
+    SetDecimalConst(u128),
+    SetMarketState(bool),                            // Set if the market is open
+    SetCurrencyPrices(Vec<(String, u128)>),          // Set Currency actual prices
+    SetRealTimePrices(Vec<(String, u128)>),          // Set Stocks actual prices
+    // SetHistoricalPrices(Vec<(String, Candle)>),      // Set Historical stock prices
 }
+
+
+
 
 // 4. Create your own Events
 #[derive(Debug, Decode, Encode, TypeInfo)]
 #[codec(crate = gstd::codec)]
 #[scale_info(crate = gstd::scale_info)]
 pub enum Events {
-    // Add Events(Example)
+
+    // Query Answers
     SuccessfulStateRequest { market_state: bool },       
     SuccessfulSinglePriceRequest { market_state: bool, price: u128 },       
     SuccessfulMultiplePriceRequest {
         market_state: bool,
         prices: Vec<u128>,
     },
+    SuccessfulCurrencyExchangeRequest{ price: u128, },
+    SuccessfulStockHistoryRequest{ candles: Vec<Candle>},
+    RefundCompleted { funds: u128, account: ActorId}, 
 
-    MarketStateSetSuccessfully, 
-    FeesSetSuccessfully,
-    IdAddedSuccesfully,  
-    AuthorizedIdDeleted,           
-    FuntsDepositedSuccessfully,     
-    NewOwnerSetSuccesfully,
-    RefundCompleted       
+    //  Owner events (Funds related)
+    FeesSetSuccessfully { new_fee: u128 },
+    IdAddedSuccesfully { new_actor_id: ActorId },  
+    IdDeletedSuccesfully { deleted_actor_id: ActorId },           
+    FuntsDepositedSuccessfully { funds: u128, account: ActorId},     
+    NewOwnerSetSuccesfully { new_owner: ActorId},
+
+    // Owner Actions (Data related)
+    DecimalsSetSuccessfully { new_decimals: u128},
+    MarketStateSetSuccessfully,
+    SupportCurrencysSetSuccessfully,
+    SupportedStocksSetSuccessfully,
+
+    CurrencyPricesSetSuccessfully,
+    RealTimePricesSetSuccessfully,
+    HistoricalPricesSetSuccessfully,
+           
 }
+
+
 
 // 5. Create your own Errors
 #[derive(Debug, Decode, Encode, TypeInfo)]
 #[codec(crate = gstd::codec)]
 #[scale_info(crate = gstd::scale_info)]
 pub enum Errors {
-    // Add errors(Example)
-    TickerSymbolNotFound,       // Ticker Symbol not avalible
-    InsufficientFundsAttached,  // Requesting data requires funds
+    TickerSymbolNotFound{       // Ticker Symbol not avalible
+        invalid_tickers: Vec<String>
+    },      
+    CurrencySymbolNotFound{     // Currency Symbol not avalible
+        invalid_currencys: Vec<String>
+    },
+    InsufficientFundsAttached{  // Requesting data requires funds
+        required_founds: u128,
+        founds_on_your_account: u128,
+    },  
+    DataNotFound,
     UnauthorizedAction,         // Only Owner can do some actions
-    //ServiceUnavalible,          // Cany connect with the provider
-    UnableToSendMessageToService,
-    UnableToReply,
     NotExtraFundsWhereFound,
     IdNotFound,
-    UnableToDecodeReply,
 }
 
 // 7. Create your State Querys
@@ -137,13 +171,17 @@ pub enum Errors {
 #[codec(crate = gstd::codec)]
 #[scale_info(crate = gstd::scale_info)]
 pub enum Query {
+
     // Oficial read States
     OwnerId,
     AuthorizedIds,
     MarketStateRequiredFunds,
-    SinglePriceRequiredFunds,
-    MultiplePriceRequiredFunds(u128),
+    SinglePriceRequiredFunds(InputSingleStockPrice),
+    MultiplePriceRequiredFunds(InputMultipleStockPrices),
+    CurrencyExchangeRequiredFunds,
     CheckExtraFunds(ActorId),
+    CheckDecimalConst,
+
 
     // Debug read States
     MarketState,
@@ -160,7 +198,9 @@ pub enum QueryReply {
     MarketStateRequiredFunds(u128),     // How much should I deposit to request market state?
     SinglePriceRequiredFunds(u128),     // How much should I deposit to request market state?
     MultiplePriceRequiredFunds(u128),   // How much should I deposit to request market state?
+    CurrencyExchangeRequiredFunds(u128),
     CheckExtraFunds(u128),              // Check if have fund with the service
+    CheckDecimalConst(u128),
 
     // Debug read States
     MarketState(bool),                  // The market state?   
