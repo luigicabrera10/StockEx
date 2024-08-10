@@ -5,7 +5,7 @@ let STOCK_API_KEY; // Api key for stock price service
 const stockApiKeyFile = '/home/northsoldier/Documents/Hackathons/Varathon - StockEx/nodejs_server/real-time-stocks-fetching-service/stockApiKey.txt';
 const allSupportedStocksFile = '/home/northsoldier/Documents/Hackathons/Varathon - StockEx/nodejs_server/allStocks.txt';
 const savedStockPricesFile = '/home/northsoldier/Documents/Hackathons/Varathon - StockEx/nodejs_server/real-time-stocks-fetching-service/savedStocksPrices.json';
-const decimal_fix_for_SmartContracts = Math.pow(10, 10); // 10 ** 100
+const decimal_fix_for_SmartContracts = Math.pow(10, 10); // 10 ** 10
 
 
 let allSupportedStocks = [] // A list with all currencies that are supported for the api call

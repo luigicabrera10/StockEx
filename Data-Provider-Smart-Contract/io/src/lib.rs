@@ -206,6 +206,7 @@ pub enum Query {
     LastHistoricalUpdate(String),
 
     CheckExtraFunds(ActorId),
+    CheckCollectedFunds,
     CheckDecimalConst,
 
 
@@ -235,6 +236,7 @@ pub enum QueryReply {
     LastHistoricalUpdate(String),
 
     CheckExtraFunds(u128),              // Check if have fund with the service
+    CheckCollectedFunds(u128),
     CheckDecimalConst(u128),
 
 }

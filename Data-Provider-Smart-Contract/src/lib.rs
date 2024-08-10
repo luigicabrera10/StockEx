@@ -139,7 +139,8 @@ impl ProviderStruct {
             }
         };
         
-        let final_price: u128 = (stock_price * (currency_price / self.decimal_const)) as u128;
+        // let final_price: u128 = (stock_price * (currency_price / self.decimal_const)) as u128;
+        let final_price: u128 = (stock_price * currency_price) / self.decimal_const;
 
         Ok(Events::SuccessfulSinglePriceRequest {
             market_state: self.market_state.clone(),
@@ -195,8 +196,8 @@ impl ProviderStruct {
             };
     
             // Calculate the final price in the requested currency
-            // let final_price = stock_price * currency_price;
-            let final_price: u128 = (stock_price * (currency_price / self.decimal_const)) as u128;
+            // let final_price: u128 = (stock_price * (currency_price / self.decimal_const)) as u128;
+            let final_price: u128 = (stock_price * currency_price) / self.decimal_const;
             stock_prices.push(final_price);
         }
     
@@ -259,7 +260,8 @@ impl ProviderStruct {
             });
         }
 
-        let final_price: u128 = ((value * self.decimal_const * currency2_price) / currency1_price) as u128;
+        // let final_price: u128 = ((value * self.decimal_const * currency2_price) / currency1_price) as u128;
+        let final_price: u128 = value * (self.decimal_const * currency2_price) / currency1_price;
 
         Ok(Events::SuccessfulCurrencyExchangeRequest{ 
             price: final_price
@@ -691,6 +693,7 @@ extern "C" fn state() {
             let extra_funds = state.extra_funds_deposited.get(&actor_id).cloned().unwrap_or(0);
             QueryReply::CheckExtraFunds(extra_funds)
         },
+        Query::CheckCollectedFunds => QueryReply::CheckCollectedFunds(state.collected_funds),
         Query::CheckDecimalConst => QueryReply::CheckDecimalConst(state.decimal_const),
 
     };
