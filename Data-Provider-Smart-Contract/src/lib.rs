@@ -44,7 +44,7 @@ pub struct ProviderStruct {
 // Create a implementation on State
 impl ProviderStruct {
 
-    fn handle_transfer_funds(&mut self, actor_id: ActorId, mut value: u128, query_fee: u128) -> bool {
+    pub fn handle_transfer_funds(&mut self, actor_id: ActorId, mut value: u128, query_fee: u128) -> bool {
 
         // Create a reference to the entry for actor_id in extra_funds_deposited
         let extra_funds_entry = self.extra_funds_deposited.entry(actor_id).or_insert(0);
@@ -80,7 +80,7 @@ impl ProviderStruct {
         return true
     }
 
-    fn request_market_state(&mut self) -> Result<Events, Errors> {
+    pub fn request_market_state(&mut self) -> Result<Events, Errors> {
         
         // Message Data
         let actor_id = msg::source();
@@ -98,7 +98,7 @@ impl ProviderStruct {
         Ok(Events::SuccessfulStateRequest { market_state: self.market_state } )
     }
 
-    fn request_single_price(&mut self, request_query: InputSingleStockPrice) -> Result<Events, Errors> {
+    pub fn request_single_price(&mut self, request_query: InputSingleStockPrice) -> Result<Events, Errors> {
         
         let actor_id = msg::source();
         let transferred_value = msg::value();
@@ -148,7 +148,7 @@ impl ProviderStruct {
         })
     }
 
-    fn request_multiple_prices(&mut self, request_query: InputMultipleStockPrices) -> Result<Events, Errors> {
+    pub fn request_multiple_prices(&mut self, request_query: InputMultipleStockPrices) -> Result<Events, Errors> {
         
         let actor_id = msg::source();
         let transferred_value = msg::value();
@@ -221,7 +221,7 @@ impl ProviderStruct {
         })
     }
 
-    fn request_currency_exchange(&mut self, currency1: String, currency2: String, value: u128) -> Result<Events, Errors> {
+    pub fn request_currency_exchange(&mut self, currency1: String, currency2: String, value: u128) -> Result<Events, Errors> {
         let actor_id = msg::source();
         let transferred_value = msg::value();
 
@@ -261,7 +261,7 @@ impl ProviderStruct {
         }
 
         // let final_price: u128 = ((value * self.decimal_const * currency2_price) / currency1_price) as u128;
-        let final_price: u128 = value * (self.decimal_const * currency2_price) / currency1_price;
+        let final_price: u128 = (value * currency2_price) / currency1_price;
 
         Ok(Events::SuccessfulCurrencyExchangeRequest{ 
             price: final_price
@@ -269,7 +269,7 @@ impl ProviderStruct {
 
     }
 
-    fn request_stock_history(&mut self, stock: String, limit: u128) -> Result<Events, Errors> {
+    pub fn request_stock_history(&mut self, stock: String, limit: u128) -> Result<Events, Errors> {
 
         let actor_id = msg::source();
         let transferred_value = msg::value();
@@ -305,7 +305,7 @@ impl ProviderStruct {
         })
     }
 
-    fn request_refund(&mut self) -> Result<Events, Errors> {
+    pub fn request_refund(&mut self) -> Result<Events, Errors> {
 
         // Message Data
         let actor_id = msg::source();
@@ -335,12 +335,12 @@ impl ProviderStruct {
 
 
     // Check if the caller is the owner
-    fn is_owner(&self, caller: ActorId) -> bool {
+    pub fn is_owner(&self, caller: ActorId) -> bool {
         caller == self.owner
     }
 
     // Set fees per query (only owner)
-    fn set_fees(&mut self, new_fees: u128) -> Result<Events, Errors> {
+    pub fn set_fees(&mut self, new_fees: u128) -> Result<Events, Errors> {
         let caller = msg::source();
         if !self.is_owner(caller) {
             return Err(Errors::UnauthorizedAction);
@@ -352,7 +352,7 @@ impl ProviderStruct {
     }
 
     // Add authorized ID (only owner)
-    fn set_authorized_id(&mut self, new_id: ActorId) -> Result<Events, Errors> {
+    pub fn set_authorized_id(&mut self, new_id: ActorId) -> Result<Events, Errors> {
         let caller = msg::source();
         if !self.is_owner(caller) {
             return Err(Errors::UnauthorizedAction);
@@ -364,7 +364,7 @@ impl ProviderStruct {
     }
 
     // Remove authorized ID (only owner)
-    fn delete_authorized_id(&mut self, id_to_delete: ActorId) -> Result<Events, Errors> {
+    pub fn delete_authorized_id(&mut self, id_to_delete: ActorId) -> Result<Events, Errors> {
         let caller = msg::source();
         if !self.is_owner(caller) {
             return Err(Errors::UnauthorizedAction);
@@ -380,7 +380,7 @@ impl ProviderStruct {
     }
 
     // Deposit collected funds to owner (only owner)
-    fn deposit_funds_to_owner(&mut self) -> Result<Events, Errors> {
+    pub fn deposit_funds_to_owner(&mut self) -> Result<Events, Errors> {
         let caller = msg::source();
         if !self.is_owner(caller) {
             return Err(Errors::UnauthorizedAction);
@@ -396,7 +396,7 @@ impl ProviderStruct {
     }
 
     // Set new owner (only owner)
-    fn set_new_owner(&mut self, new_owner: ActorId) -> Result<Events, Errors> {
+    pub fn set_new_owner(&mut self, new_owner: ActorId) -> Result<Events, Errors> {
 
         let caller = msg::source();
 
@@ -411,7 +411,7 @@ impl ProviderStruct {
 
     // OWNER ACTIONS (DATA RELATED): -------------------------------------------------
 
-    fn set_decimals_const(&mut self, new_decimals: u128) -> Result<Events, Errors> {
+    pub fn set_decimals_const(&mut self, new_decimals: u128) -> Result<Events, Errors> {
         let caller = msg::source();
         if !self.is_owner(caller) {
             return Err(Errors::UnauthorizedAction);
@@ -420,7 +420,7 @@ impl ProviderStruct {
         Ok(Events::DecimalsSetSuccessfully{ new_decimals: self.decimal_const })
     }
 
-    fn set_market_state(&mut self, new_state: bool) -> Result<Events, Errors> {
+    pub fn set_market_state(&mut self, new_state: bool) -> Result<Events, Errors> {
         let caller = msg::source();
         if !self.is_owner(caller) {
             return Err(Errors::UnauthorizedAction);
@@ -431,7 +431,7 @@ impl ProviderStruct {
 
 
 
-    fn set_currencys_prices(&mut self, currencys: Vec<(String, u128)>) -> Result<Events, Errors> {
+    pub fn set_currencys_prices(&mut self, currencys: Vec<(String, u128)>) -> Result<Events, Errors> {
         let caller = msg::source();
         if !self.is_owner(caller) {
             return Err(Errors::UnauthorizedAction);
@@ -445,7 +445,7 @@ impl ProviderStruct {
         Ok(Events::CurrencyPricesSetSuccessfully)
     }
 
-    fn update_currencys_prices(&mut self, currencys: Vec<(String, u128)>) -> Result<Events, Errors> {
+    pub fn update_currencys_prices(&mut self, currencys: Vec<(String, u128)>) -> Result<Events, Errors> {
         let caller = msg::source();
         if !self.is_owner(caller) {
             return Err(Errors::UnauthorizedAction);
@@ -458,7 +458,7 @@ impl ProviderStruct {
         Ok(Events::CurrencyPricesUpdateSuccessfully)
     }
 
-    fn delete_currencys_prices(&mut self, currencys: Vec<String>) -> Result<Events, Errors> {
+    pub fn delete_currencys_prices(&mut self, currencys: Vec<String>) -> Result<Events, Errors> {
         let caller = msg::source();
         if !self.is_owner(caller) {
             return Err(Errors::UnauthorizedAction);
@@ -472,7 +472,7 @@ impl ProviderStruct {
     }
 
 
-    fn set_stocks_prices(&mut self, stocks: Vec<(String, u128)>) -> Result<Events, Errors> {
+    pub fn set_stocks_prices(&mut self, stocks: Vec<(String, u128)>) -> Result<Events, Errors> {
         let caller = msg::source();
         if !self.is_owner(caller) {
             return Err(Errors::UnauthorizedAction);
@@ -486,7 +486,7 @@ impl ProviderStruct {
         Ok(Events::RealTimePricesSetSuccessfully)
     }
 
-    fn update_stocks_prices(&mut self, stocks: Vec<(String, u128)>) -> Result<Events, Errors> {
+    pub fn update_stocks_prices(&mut self, stocks: Vec<(String, u128)>) -> Result<Events, Errors> {
         let caller = msg::source();
         if !self.is_owner(caller) {
             return Err(Errors::UnauthorizedAction);
@@ -499,7 +499,7 @@ impl ProviderStruct {
         Ok(Events::RealTimePricesUpdateSuccessfully)
     }
 
-    fn delete_stocks_prices(&mut self, stocks: Vec<String>) -> Result<Events, Errors> {
+    pub fn delete_stocks_prices(&mut self, stocks: Vec<String>) -> Result<Events, Errors> {
         let caller = msg::source();
         if !self.is_owner(caller) {
             return Err(Errors::UnauthorizedAction);
@@ -513,7 +513,7 @@ impl ProviderStruct {
     }
 
 
-    fn set_historical_prices(&mut self, stock: String, history: Vec<Candle>) -> Result<Events, Errors> {
+    pub fn set_historical_prices(&mut self, stock: String, history: Vec<Candle>) -> Result<Events, Errors> {
         let caller = msg::source();
         if !self.is_owner(caller) {
             return Err(Errors::UnauthorizedAction);
@@ -523,7 +523,7 @@ impl ProviderStruct {
         Ok(Events::HistoricalPricesSetSuccessfully)
     }
 
-    fn add_historical_prices(&mut self, stock: String, history: Vec<Candle>) -> Result<Events, Errors> {
+    pub fn add_historical_prices(&mut self, stock: String, history: Vec<Candle>) -> Result<Events, Errors> {
         let caller = msg::source();
         if !self.is_owner(caller) {
             return Err(Errors::UnauthorizedAction);
@@ -540,7 +540,7 @@ impl ProviderStruct {
         Ok(Events::HistoricalPricesAddedSuccessfully)
     }
 
-    fn delete_historical_prices(&mut self, stock: String, datetimes: Vec<String>) -> Result<Events, Errors> {
+    pub fn delete_historical_prices(&mut self, stock: String, datetimes: Vec<String>) -> Result<Events, Errors> {
         let caller = msg::source();
         if !self.is_owner(caller) {
             return Err(Errors::UnauthorizedAction);
@@ -574,7 +574,7 @@ extern "C" fn init() {
         owner: config.data_provider_owner,      // Initialize the owner field
         fees_per_query: config.fees,  // 0.5 Vara 
         collected_funds: 0,
-        decimal_const: 1000000000,
+        decimal_const: 1000000000000,
         ..Default::default()
     };
 

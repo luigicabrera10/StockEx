@@ -74,6 +74,33 @@ impl CustomStruct {
             _ => Err(Errors::UnexpectedReply),
         }
     }
+
+    pub async fn request_exchange(&mut self, currency1: String,currency2: String, value:u128) -> Result<Events, Errors> {
+   
+        self.last_ticker1 = currency1.clone();
+        self.last_ticker2 = currency2.clone();
+    
+        let reply = msg::send_for_reply_as::<_, Result<ProviderEvents, ProviderErrors>>(
+            self.contract,
+            ProviderActions::RequestCurrencyExchange(currency1, currency2, value),
+            0,
+            0,
+        )
+        .expect("Error in sending a message")
+        .await;
+    
+        match reply {
+            Ok(Ok(ProviderEvents::SuccessfulCurrencyExchangeRequest { price })) => {
+                self.prices = vec![price];
+                Ok(Events::DataProvided{
+                    data: price
+                })
+            }
+            Ok(Err(provider_error)) => Err(Errors::ProviderError),
+            Err(send_error) => Err(Errors::SendError),
+            _ => Err(Errors::UnexpectedReply),
+        }
+    }
 }
 
 // Initialize the contract state
@@ -99,6 +126,7 @@ async fn main() {
     let reply = match action {
         Actions::RequestData(input) => state.request_data(input).await,
         Actions::RequestDataMultiple(input) => state.request_data_multiple(input).await,
+        Actions::RequestExchange(input1,input2,input3) => state.request_exchange(input1,input2,input3).await,
         Actions::SetContractId(input) => state.set_contract_id(input),
     };
 

@@ -33,6 +33,7 @@ pub enum Actions {
     // Add Actions
     RequestData(InputSingleStockPrice),  // Example an action
     RequestDataMultiple(InputMultipleStockPrices),  // Example an action
+    RequestExchange(String, String, u128),  // Example an action
     SetContractId(ActorId),  // Example an action
 }
 
@@ -174,6 +175,9 @@ pub enum Events {
     // Add Events(Example)
     DataProvidedSuccessfully,   // Example an event with a simple input
     SetContractIdSuccessfully,   // Example an event with a simple input
+    DataProvided{
+        data: u128
+    }
 }
 
 #[derive(Debug, Decode, Encode, TypeInfo)]
