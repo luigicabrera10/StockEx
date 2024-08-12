@@ -15,9 +15,9 @@ let stocksUpdates = { }; // Everything have as base price the USD
 // Example: {'TSLA': {'lastRefresh': '2024-07-24T23:59:59Z', 'price': 154.23}, 'MSFT': {'lastRefresh': '2024-07-24T23:59:59Z', 'price': 153.8537454521}}
 
 // Set lower
-let updateStockTimeRate = 2 * 60 * 1000; // 2 minutes in milliseconds
+// let updateStockTimeRate = 2 * 60 * 1000; // 2 minutes in milliseconds
 // let updateStockTimeRate = 5 * 60 * 1000; // 5 minutes in milliseconds
-// let updateStockTimeRate = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+let updateStockTimeRate = 30 * 60 * 1000; // 5 minutes in milliseconds (for testing)
 
 
 async function setStockApiKey() {
@@ -196,7 +196,7 @@ async function initStockFetchingService(){
     await loadSavedStockPrices();
     allSupportedStocks = await loadAllSupportedStocks();
 
-    console.log("Stock prices loaded: ", stocksUpdates, "\n");
+    console.log("Stock prices loaded: ", Object.keys(stocksUpdates), "\n");
 
     console.log("\nReal Time Stock Fetching Service Init Successfully!\n\n");
 };

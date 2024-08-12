@@ -14,6 +14,7 @@ let gearApi;
 let ownerKeyRing;
 let blockChainInfo = {};
 
+
 // Connect to Vara Network
 async function connect() {
     console.log("Connecting to ", networkAddress);
@@ -59,8 +60,13 @@ async function createKeyRing() {
     console.log("\nOwner KeyRing Created:", ownerKeyRing.address);
 }
 
+// Like a sleep
+async function wait(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 // Send a single message using metadata
-async function sendMessage(payload, gas_limit = 98998192450, vara = 0) {
+async function sendMessage(payload, gas_limit = 98998192450, vara = 0, wait_time = 8000) {
     try {
 
         const message = {
@@ -80,10 +86,47 @@ async function sendMessage(payload, gas_limit = 98998192450, vara = 0) {
         });
 
         console.log("\nMessage Sent.");
+
+        await wait(wait_time);
+            
+
     } catch (error) {
         console.error("Error sending message:", error);
     }
 }
+
+
+// Function to read the state from the smart contract
+async function readState(stateName, payload = null) {
+    try {
+        // Load the metadata
+        const metadataProgram = ProgramMetadata.from(metaData);
+
+        // Encode the payload if provided
+        const encodedPayload = payload
+            ? metadataProgram.handleState.encode(stateName, payload)
+            : metadataProgram.handleState.encode(stateName);
+
+        // Create the state query object
+        const stateQuery = {
+            accountId: myContractId,  // The smart contract address
+            key: encodedPayload,      // The encoded state name (and payload if any)
+            metadata: metadataProgram,
+        };
+
+        // Query the state
+        const state = await gearApi.program.state.read(stateQuery);
+
+        console.log(`\nState '${stateName}':`, state.toHuman());
+
+        return state.toHuman();  // Return the human-readable state
+    } catch (error) {
+        console.error("Error reading state:", error);
+        throw error;  // Handle or propagate the error as needed
+    }
+}
+
+
 
 // Main function to set up the server
 async function initSmartContractService() {
@@ -108,5 +151,7 @@ async function main(){
 
 module.exports = {
     initSmartContractService,
-    sendMessage
+    sendMessage,
+    readState,
+    wait
 };

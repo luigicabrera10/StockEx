@@ -239,7 +239,7 @@ async function initCurrencyFetchingService(){
     allSupportedCurrencies = await loadAllSupportedCurrencies();
     allSupportedCrypto = await loadAllSupportedCrypto();
 
-    console.log("Exchange rates loaded: ", exchangeUpdates, "\n");
+    console.log("Exchange rates loaded: ", Object.keys(exchangeUpdates), "\n");
 
     // ONLY If you want to update everything at once every day (In order to not wast api calls on certain symbols every day):
     // Very usefull for now 

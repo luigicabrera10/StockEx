@@ -1,4 +1,5 @@
 const { DateTime } = require('luxon');
+const { Mutex } = require('async-mutex');
 
 const {
    initDataService,
@@ -21,15 +22,16 @@ const {
 
 const {
    initSmartContractService,
-   sendMessage
+   sendMessage,
+   readState,
+   wait
 } = require('./smartContractComunication');
 
-const decimal_const = Math.pow(10,12);
 
-// Like a sleep
-async function wait(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
+const decimal_const = Math.pow(10,12);
+const mutex = new Mutex();
+
+
 
 // FOR MARKET STATE UPDATE -------------------------------------------------------------------------------------------
 
@@ -79,9 +81,14 @@ async function updateMarketState(){
 
         let market_state = isNasdaqMarketOpen();
 
-        console.log("Sending Message of market state: ", market_state);
-        sendMessage({
-            SetMarketState: market_state
+        await mutex.runExclusive(async () => {
+
+
+            console.log("Sending Message of market state: ", market_state);
+            await sendMessage({
+                SetMarketState: market_state
+            });
+
         });
 
         if (market_state){
@@ -117,8 +124,12 @@ async function parseAndSendCurrencys(currencys_symbols){
         // console.log(i, ": ", [currencys_symbols[i], priceStr]);
     }
 
-    console.log("Sending currencys prices: ", payload);
-    sendMessage(payload);
+    await mutex.runExclusive(async () => {
+    
+        console.log("Sending currencys prices: ", payload);
+        await sendMessage(payload);
+
+    });
 
 }
 
@@ -185,6 +196,7 @@ async function updateCrypto(){
 
 async function parseAndSendRealTimeStockPrices(stocks_symbols){
 
+
     const request = stocks_symbols.map( stock_symbol => [stock_symbol, "USD"])
     const stock_prices = await fetchStockPrices(request);
 
@@ -203,15 +215,20 @@ async function parseAndSendRealTimeStockPrices(stocks_symbols){
         // console.log(i, ": ", [stocks_symbols[i], priceStr]);
     }
 
-    console.log("Sending real time stock prices: ", payload);
-    sendMessage(payload);
+    await mutex.runExclusive(async () => {
+
+        console.log("Sending real time stock prices: ", payload);
+        await sendMessage(payload);
+
+    });
 
 }
 
 async function updateRealTimeStocks(){
 
     const supportedStocks = await loadAllSupportedStocks();
-    const updateStockTimeRate = 5 * 60 * 1000; // 5 minutes in milliseconds
+    // const updateStockTimeRate = 5 * 60 * 1000; // 5 minutes in milliseconds
+    const updateStockTimeRate = 30 * 60 * 1000; // 30 minutes in milliseconds (FOR TESTING)
 
     while (true) {
 
@@ -278,6 +295,8 @@ async function updateRealTimeStocks(){
 
 async function updateHistoricalPrices(){
 
+    console.log( readState("LastHistoricalUpdate", "TSLA") );
+
 }
 
 
@@ -297,9 +316,12 @@ async function main(){
     // updateCurrencys();
     // updateCrypto()
 
-    updateRealTimeStocks();
+    // updateRealTimeStocks();
 
     updateHistoricalPrices();
+
+    
+
 
 }
 
