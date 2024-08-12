@@ -3,6 +3,8 @@ const {
    isCurrencySupported,
    getCurrencyPrice,
    updateExchangeRates,
+   loadAllSupportedCurrencies,
+   loadAllSupportedCrypto,
    getCurrencyLastRefresh
 } = require('./currency-fetching-service/currencyExchangeFetching');
 
@@ -10,7 +12,10 @@ const {
    initStockFetchingService,
    isStockSupported,
    getStockPrice,    
-   updateStockPrice
+   getStockLastRefresh,
+   loadAllSupportedStocks,
+   updateStockPrice,
+   isNasdaqMarketOpen
 } = require('./real-time-stocks-fetching-service/realTimeStockFetching');
 
 const {
@@ -181,8 +186,19 @@ module.exports = {
    initDataService,
 
    currencyExchange,
+   updateExchangeRates,
+   loadAllSupportedCurrencies,
+   loadAllSupportedCrypto,
+
    fetchCurrencyPrices,
+
    fetchStockPrices,
-   fetchStockHistoricalPrices
+   getStockLastRefresh,
+   loadAllSupportedStocks,
+   updateStockPrice,
+
+   fetchStockHistoricalPrices,
+   isNasdaqMarketOpen,
+   
 };
 

@@ -61,9 +61,10 @@ async function saveExchangeRates() {
 async function loadAllSupportedCurrencies() {
     try {
         const data = await fs.readFile(allSupportedCurrenciesFile, 'utf-8');
-        allSupportedCurrencies = JSON.parse(data)
+        return JSON.parse(data);
     } catch (error) {
         console.error("Error reading the supported currencies file \"", allSupportedCurrenciesFile, "\":", error);
+        return [];
     }
 }
 
@@ -72,9 +73,10 @@ async function loadAllSupportedCrypto() {
         const data = await fs.readFile(allSupportedCryptoFile, 'utf-8');
         const parsedData = JSON.parse(data);
         const rawSupportedCrypto = [...new Set(parsedData)]; // delete duplicated symbols
-        allSupportedCrypto = rawSupportedCrypto.filter(symbol => /^[a-zA-Z0-9]+$/.test(symbol));
+        return rawSupportedCrypto.filter(symbol => /^[a-zA-Z0-9]+$/.test(symbol));
     } catch (error) {
         console.error("Error reading the supported currencies file \"", allSupportedCryptoFile, "\":", error);
+        return [];
     }
 }
 
@@ -229,62 +231,13 @@ function getCurrencyLastRefresh(currency) {
 }
 
 
-async function wait(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-async function checkAndUpdateCurrencys() {
-
-    while (true) {
-
-        while(! (await updateExchangeRates(allSupportedCurrencies) )){
-            console.log("Something went wrong, try again in 10 minutes");
-            await wait(60000 * 10);
-        }
-
-        
-        const now = DateTime.now().setZone('UTC'); // Current time in UTC
-
-        // Calculate the next occurrence of 00:02:00
-        let nextTargetTime = now.set({ hour: 0, minute: 2, second: 0, millisecond: 0 });
-
-        // If the target time has already passed today, set it for tomorrow
-        if (now >= nextTargetTime) {
-            nextTargetTime = nextTargetTime.plus({ days: 1 });
-        }
-
-        // Calculate the time difference in milliseconds
-        const timeUntilNextTarget = nextTargetTime.diff(now).milliseconds;
-
-        console.log(`All currencys are updated. Waiting till next day... (${timeUntilNextTarget / 1000 / 60} minutes)`);
-
-        await wait(timeUntilNextTarget);
-
-    }
-}
-
-async function checkAndUpdateCrypto() {
-
-    while (true) {
-
-        while(! (await updateExchangeRates(allSupportedCrypto) )){
-            console.log("Something went wrong, try again in 10 minutes");
-            await wait(60000 * 10);
-        }
-
-        console.log(`All Crypto are updated. Waiting 6 hours... (${updateCryptoTimeRate / 1000 / 60} minutes)`);
-        await wait(updateCryptoTimeRate);
-
-    }
-}
-
-
 async function initCurrencyFetchingService(){
     await setCurrencyApiKey();
     await setCryptoApiKey();
     await loadSavedExchangeRates();
-    await loadAllSupportedCurrencies();
-    await loadAllSupportedCrypto();
+
+    allSupportedCurrencies = await loadAllSupportedCurrencies();
+    allSupportedCrypto = await loadAllSupportedCrypto();
 
     console.log("Exchange rates loaded: ", exchangeUpdates, "\n");
 
@@ -299,9 +252,6 @@ async function initCurrencyFetchingService(){
     // Examples:
     // await updateExchangeRates(['EUR', 'CAD', 'USD', 'GBP', 'CHF', 'NZD', 'AED']);
 
-    checkAndUpdateCurrencys();
-    checkAndUpdateCrypto();
-
     console.log("\nCurrency Fetching Service Init Successfully!\n\n")
 };
 
@@ -313,5 +263,8 @@ module.exports = {
     isCurrencySupported,
     getCurrencyPrice,
     updateExchangeRates,
-    getCurrencyLastRefresh
+    getCurrencyLastRefresh,
+
+    loadAllSupportedCurrencies,
+    loadAllSupportedCrypto
 };

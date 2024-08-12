@@ -51,9 +51,10 @@ async function saveStockPrices() {
 async function loadAllSupportedStocks() {
     try {
         const data = await fs.readFile(allSupportedStocksFile, 'utf-8');
-        allSupportedStocks = JSON.parse(data)
+        return JSON.parse(data);
     } catch (error) {
         console.error("Error reading the supported stocks file \"", allSupportedStocksFile, "\":", error);
+        return [];
     }
 }
 
@@ -134,12 +135,27 @@ async function getStockPrice(symbol){
 
     await updateStockPrice(symbol);
 
-    if (!isStockSupported(symbol)){
+    if (! stocksUpdates[symbol] ){
         console.log("Stock price didnt found")
         return null;
     }
+
     return stocksUpdates[symbol].price;
 };
+
+function getStockLastRefresh(symbol) {
+    if (!isStockSupported(symbol)){
+        console.log("Stock is not supported")
+        return null;
+    }
+
+    if (! stocksUpdates[symbol] ){
+        console.log("Stock price didnt found")
+        return null;
+    }
+    
+    return stocksUpdates[symbol].lastRefresh;
+}
 
 const fetchAllStockSymbols = async () => {
     const url = `https://finnhub.io/api/v1/stock/symbol?exchange=US&token=${STOCK_API_KEY}`;
@@ -174,71 +190,13 @@ async function waitForMarketOpen() {
 }
 
 
-async function wait(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-async function checkAndUpdateStocks() {
-
-    while (true) {
-        const currentTime = new Date().getTime();
-        let allUpdated = true; // Assume all stocks are updated initially
-        let state;
-        
-        if (isNasdaqMarketOpen()){
-
-            // for (let stock of allSupportedStocks.slice(0, 5)) {
-            for (let stock of allSupportedStocks) {
-
-                const lastRefreshTime = stocksUpdates[stock]
-                    ? new Date(stocksUpdates[stock]['lastRefresh']).getTime()
-                    : 0;
-        
-                if (currentTime - lastRefreshTime > updateStockTimeRate) {
-                    allUpdated = false; // Mark as not all updated if any stock needs an update
-                    state = await updateStockPrice(stock);
-        
-                    // Pause to respect the API rate limit (60 calls per minute)
-                    await wait(1100); // 1.1 seconds delay between each call
-                }
-        
-                // If the API limit is hit or update failed, pause
-                if (state === false) {
-                    console.log("API limit hit or update failed. Waiting for 61 seconds...");
-                    await wait(61000);
-                }
-            }
-
-        }
-        else{
-            await waitForMarketOpen();
-            console.log("Market is now open. Starting stock updates...");
-            continue;
-        }
-    
-        if (allUpdated) {
-            console.log("All stocks are updated. Waiting 5 minutes...");
-            // Wait the remaining time until the next update
-            await wait(updateStockTimeRate);
-        } else {
-            console.log("Some stocks were updated. Continuing process...");
-            // Short delay before the next loop iteration
-            await wait(5000); // 5 seconds delay
-        }
-    }
-}
-
-
-
 async function initStockFetchingService(){
     
     await setStockApiKey();
     await loadSavedStockPrices();
-    await loadAllSupportedStocks();
+    allSupportedStocks = await loadAllSupportedStocks();
 
     console.log("Stock prices loaded: ", stocksUpdates, "\n");
-
-    checkAndUpdateStocks();
 
     console.log("\nReal Time Stock Fetching Service Init Successfully!\n\n");
 };
@@ -249,5 +207,8 @@ module.exports = {
     initStockFetchingService,
     isStockSupported,
     getStockPrice,    
-    updateStockPrice
+    getStockLastRefresh,
+    loadAllSupportedStocks,
+    updateStockPrice,
+    isNasdaqMarketOpen,
 };
