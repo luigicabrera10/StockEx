@@ -50,6 +50,36 @@ async function currencyExchange(currency1, currency2, value = 1.0){
    return value * getCurrencyPrice(currency2) / getCurrencyPrice(currency1);
 }
 
+// Fetch the prices of multiple currencys
+async function fetchCurrencyPrices(currencys){
+
+   let invalid_currencys = [];
+   
+   currencys.forEach( currency => {
+      if (!isCurrencySupported(currency)) {
+         console.log("Currency '", currency, "' is not supported!");
+         invalid_currencys.push(currency);
+      }
+   })
+   
+   if (invalid_currencys.length > 0){
+      return null;
+   }
+
+   await updateExchangeRates(currencys);
+
+   let prices = [];
+
+   currencys.forEach( currency => {
+      prices.push(getCurrencyPrice(currency));
+   })
+
+   return prices;
+
+}
+
+
+
 // Fetch stock prices (on any currency)
 async function fetchStockPrices(symbolsAndCurrencies){
 
@@ -94,52 +124,64 @@ async function fetchStockPrices(symbolsAndCurrencies){
 
 async function fetchStockHistoricalPrices(symbol){
    if (!isStockHistorySupported(symbol)){
-      console.log("Not suuported symbol for historical request");
+      console.log("Not supported symbol for historical request");
       return null;
    }
-   return await getPriceHistory(historyRequest);
+   return await getPriceHistory(symbol);
 
 }
 
-async function main(){
+async function initDataService(){
 
    await initCurrencyFetchingService(); 
    await initStockFetchingService();
    await initHistoricalStockFetchingService();
 
    // Currency exchange example: 
-   console.log("Currency exchange example");
-   console.log("USD to EUR: \t", await currencyExchange("USD", "EUR"));
-   console.log("20 USD to EUR: \t", await currencyExchange("USD", "EUR", 20));
-   console.log("USD to CAD: \t", await currencyExchange("USD", "CAD"));
-   console.log("EUR to CAD: \t", await currencyExchange("EUR", "CAD"));
-   console.log("AED to CHF: \t", await currencyExchange("AED", "CHF"));
-   console.log("20 AED to CHF: \t", await currencyExchange("AED", "CHF", 20));
-
-   // Stock Prices Examples:
-   console.log("\nStock Prices Examples:");
-   const stockPricesRequest = [
-      ['AAPL', 'EUR'],
-      ['TSLA', 'GBP'],
-      ['MSFT', 'JPY'],
-      ['NVDA', 'USD']
-   ];
-
-   const stockPrices = await fetchStockPrices(stockPricesRequest);
-   console.log("Request: ", stockPricesRequest, "\nAnswer: ", stockPrices);
+   // console.log("Currency exchange example");
+   // console.log("USD to EUR: \t", await currencyExchange("USD", "EUR"));
+   // console.log("20 USD to EUR: \t", await currencyExchange("USD", "EUR", 20));
+   // console.log("USD to CAD: \t", await currencyExchange("USD", "CAD"));
+   // console.log("EUR to CAD: \t", await currencyExchange("EUR", "CAD"));
+   // console.log("AED to CHF: \t", await currencyExchange("AED", "CHF"));
+   // console.log("20 AED to CHF: \t", await currencyExchange("AED", "CHF", 20));
 
 
-   // Historical Data Example:
-   console.log("\nHistorical Data Example: ");
-   const historyRequest = "NVDA";
-   const stockHistory = await getPriceHistory(historyRequest);
-   console.log("Request: ", historyRequest, "\nAnswer: \n", stockHistory);
+   // console.log("Currency prices example");
+   // const currencyPricesRequest = ['EUR','GBP','JPY','USD', 'VARA', 'BTC', 'ETH'];
+   // const currencysPrices = await fetchCurrencyPrices(currencyPricesRequest);
+   // console.log("Request: ", currencyPricesRequest, "\nAnswer: ", currencysPrices);
+
+
+
+   // // Stock Prices Examples:
+   // console.log("\nStock Prices Examples:");
+   // const stockPricesRequest = [
+   //    ['AAPL', 'EUR'],
+   //    ['TSLA', 'GBP'],
+   //    ['MSFT', 'JPY'],
+   //    ['NVDA', 'USD']
+   // ];
+
+   // const stockPrices = await fetchStockPrices(stockPricesRequest);
+   // console.log("Request: ", stockPricesRequest, "\nAnswer: ", stockPrices);
+
+
+
+   // // Historical Data Example:
+   // console.log("\nHistorical Data Example: ");
+   // const historyRequest = "NVDA";
+   // const stockHistory = await fetchStockHistoricalPrices(historyRequest);
+   // console.log("Request: ", historyRequest, "\nAnswer: \n", stockHistory);
 
 }
 
 
 module.exports = {
+   initDataService,
+
    currencyExchange,
+   fetchCurrencyPrices,
    fetchStockPrices,
    fetchStockHistoricalPrices
 };

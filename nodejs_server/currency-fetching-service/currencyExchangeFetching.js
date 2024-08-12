@@ -1,5 +1,6 @@
 const axios = require('axios');
 const fs = require('fs').promises;
+const { DateTime } = require('luxon');
 
 const allSupportedCurrenciesFile = '/home/northsoldier/Documents/Hackathons/Varathon - StockEx/nodejs_server/currency-fetching-service/allCurrencies.txt';
 const allSupportedCryptoFile = '/home/northsoldier/Documents/Hackathons/Varathon - StockEx/nodejs_server/currency-fetching-service/allCrypto.txt';
@@ -17,6 +18,7 @@ let exchangeUpdates = { 'USD': { 'lastRefresh': 'now', 'price': 1.0 } }; // Ever
 // Example: {'EUR': {'lastRefresh': '2024-07-24T23:59:59Z', 'price': 0.9223401357}, 'JPY': {'lastRefresh': '2024-07-24T23:59:59Z', 'price': 153.8537454521}}
 
 const updateCurrencyTimeRate = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+const updateCryptoTimeRate = 6 * 60 * 60 * 1000; // 6 hours in milliseconds
 
 async function setCurrencyApiKey() {
     try {
@@ -104,7 +106,7 @@ async function updateExchangeRates(currencies) {
     // If no currency needs an update:
     if (requestCurrencies.length === 0 && requestCrypto.length === 0){
         // console.log("\nCurrencys updated successfully!");
-        return;
+        return true;
     }
 
     console.log("Warning: Updating the following Currencies: ", requestCurrencies);
@@ -157,7 +159,10 @@ async function updateExchangeRates(currencies) {
     } catch (error) {
         console.error("Error updating exchange rates: ", error);
         console.error("Recovering using last fetched price");
+        return false;
     }
+
+    return true;
 }
 
 
@@ -223,6 +228,57 @@ function getCurrencyLastRefresh(currency) {
     }
 }
 
+
+async function wait(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function checkAndUpdateCurrencys() {
+
+    while (true) {
+
+        while(! (await updateExchangeRates(allSupportedCurrencies) )){
+            console.log("Something went wrong, try again in 10 minutes");
+            await wait(60000 * 10);
+        }
+
+        
+        const now = DateTime.now().setZone('UTC'); // Current time in UTC
+
+        // Calculate the next occurrence of 00:02:00
+        let nextTargetTime = now.set({ hour: 0, minute: 2, second: 0, millisecond: 0 });
+
+        // If the target time has already passed today, set it for tomorrow
+        if (now >= nextTargetTime) {
+            nextTargetTime = nextTargetTime.plus({ days: 1 });
+        }
+
+        // Calculate the time difference in milliseconds
+        const timeUntilNextTarget = nextTargetTime.diff(now).milliseconds;
+
+        console.log(`All currencys are updated. Waiting till next day... (${timeUntilNextTarget / 1000 / 60} minutes)`);
+
+        await wait(timeUntilNextTarget);
+
+    }
+}
+
+async function checkAndUpdateCrypto() {
+
+    while (true) {
+
+        while(! (await updateExchangeRates(allSupportedCrypto) )){
+            console.log("Something went wrong, try again in 10 minutes");
+            await wait(60000 * 10);
+        }
+
+        console.log(`All Crypto are updated. Waiting 6 hours... (${updateCryptoTimeRate / 1000 / 60} minutes)`);
+        await wait(updateCryptoTimeRate);
+
+    }
+}
+
+
 async function initCurrencyFetchingService(){
     await setCurrencyApiKey();
     await setCryptoApiKey();
@@ -242,6 +298,9 @@ async function initCurrencyFetchingService(){
 
     // Examples:
     // await updateExchangeRates(['EUR', 'CAD', 'USD', 'GBP', 'CHF', 'NZD', 'AED']);
+
+    checkAndUpdateCurrencys();
+    checkAndUpdateCrypto();
 
     console.log("\nCurrency Fetching Service Init Successfully!\n\n")
 };

@@ -1,5 +1,6 @@
 const axios = require('axios');
 const fs = require('fs').promises;
+const { DateTime } = require('luxon');
 
 let STOCK_API_KEY; // Api key for stock price service
 const stockApiKeyFile = '/home/northsoldier/Documents/Hackathons/Varathon - StockEx/nodejs_server/real-time-stocks-fetching-service/stockApiKey.txt';
@@ -14,8 +15,9 @@ let stocksUpdates = { }; // Everything have as base price the USD
 // Example: {'TSLA': {'lastRefresh': '2024-07-24T23:59:59Z', 'price': 154.23}, 'MSFT': {'lastRefresh': '2024-07-24T23:59:59Z', 'price': 153.8537454521}}
 
 // Set lower
-// let updateStockTimeRate = 2 * 60 * 1000; // 2 minutes in milliseconds
-let updateStockTimeRate = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+let updateStockTimeRate = 2 * 60 * 1000; // 2 minutes in milliseconds
+// let updateStockTimeRate = 5 * 60 * 1000; // 5 minutes in milliseconds
+// let updateStockTimeRate = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
 
 
 async function setStockApiKey() {
@@ -59,17 +61,34 @@ function isStockSupported(symbol){
     return allSupportedStocks.includes(symbol);
 }
 
+function isNasdaqMarketOpen() {
+    // Get the current time in Eastern Time (ET)
+    const now = DateTime.now().setZone('America/New_York');
+
+    // Check if today is a weekday (Monday to Friday)
+    const isWeekday = now.weekday >= 1 && now.weekday <= 5;
+
+    // Define market open and close times (9:30 AM to 4:00 PM ET)
+    const marketOpenTime = now.set({ hour: 9, minute: 30, second: 0, millisecond: 0 });
+    const marketCloseTime = now.set({ hour: 16, minute: 0, second: 0, millisecond: 0 });
+
+    // Check if the current time is within market hours
+    const isMarketOpen = isWeekday && now >= marketOpenTime && now <= marketCloseTime;
+
+    return isMarketOpen;
+}
+
 async function updateStockPrice(symbol){
 
     if (!isStockSupported(symbol)){
         console.log("Stock is not supported")
-        return;
+        return false;
     }
 
     // Check if stock price exist and if a update is needed
     const currentTime = new Date().getTime();
     const lastRefreshTime = new Date(stocksUpdates[symbol]?.lastRefresh || 0).getTime();
-    if (stocksUpdates[symbol] && (currentTime - lastRefreshTime <= updateStockTimeRate)) return;
+    if (stocksUpdates[symbol] && (currentTime - lastRefreshTime <= updateStockTimeRate)) return true;
 
     // If an update is required:
     console.log("Warning: Updating the following stock: ", symbol);
@@ -92,15 +111,18 @@ async function updateStockPrice(symbol){
 
         // console.log("Updated: ", stocksUpdates[symbol]);
         await saveStockPrices();
-        return;
 
     } catch (error) {
         if (error.response && error.response.status === 429) {
             console.error('Error: We have exceeded the number of API calls available.');
         } else {
             console.error('Error fetching data:', error.message);
+            return false;
         }   
     }
+
+    return true;
+
 }
 
 // Function to fetch stock price in USD and convert it to the specified currency
@@ -136,51 +158,76 @@ const fetchAllStockSymbols = async () => {
     }
 };
 
+
+async function waitForMarketOpen() {
+    const now = DateTime.now().setZone('America/New_York');
+
+    const marketOpenTime = now.set({ hour: 9, minute: 30, second: 0, millisecond: 0 });
+
+    // Calculate time difference in milliseconds
+    const timeUntilMarketOpens = marketOpenTime.diff(now).milliseconds;
+
+    console.log(`Market is closed. Waiting ${timeUntilMarketOpens / 1000 / 60} minutes until market opens...`);
+
+    // Wait until the market opens
+    await wait(timeUntilMarketOpens);
+}
+
+
 async function wait(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-/*
-async function updateStocksPerMinute() {
+async function checkAndUpdateStocks() {
 
     while (true) {
         const currentTime = new Date().getTime();
-        let allUpdated = true;
+        let allUpdated = true; // Assume all stocks are updated initially
         let state;
-    
-        for (let stock of allSupportedStocks) {
-            const lastRefreshTime = stocksUpdates[stock]
-                ? new Date(stocksUpdates[stock]['lastRefresh']).getTime()
-                : 0;
-    
-            if (currentTime - lastRefreshTime > updateStockTimeRate) {
-                allUpdated = false;
-                await updateStockPrice(stock);
-    
-                // Pause to respect the API rate limit (60 calls per minute)
-                await wait(1000); // 1 seconds delay between each call
+        
+        if (isNasdaqMarketOpen()){
+
+            // for (let stock of allSupportedStocks.slice(0, 5)) {
+            for (let stock of allSupportedStocks) {
+
+                const lastRefreshTime = stocksUpdates[stock]
+                    ? new Date(stocksUpdates[stock]['lastRefresh']).getTime()
+                    : 0;
+        
+                if (currentTime - lastRefreshTime > updateStockTimeRate) {
+                    allUpdated = false; // Mark as not all updated if any stock needs an update
+                    state = await updateStockPrice(stock);
+        
+                    // Pause to respect the API rate limit (60 calls per minute)
+                    await wait(1100); // 1.1 seconds delay between each call
+                }
+        
+                // If the API limit is hit or update failed, pause
+                if (state === false) {
+                    console.log("API limit hit or update failed. Waiting for 61 seconds...");
+                    await wait(61000);
+                }
             }
-    
-            // If the API limit is hit (60 calls), wait for 61 seconds
-            // if (Object.keys(stocksUpdates).length % 8 === 0 || state === false) {
-            //     console.log("API limit hit. Waiting for 61 seconds...");
-            //     await wait(61000);
-            // }
+
+        }
+        else{
+            await waitForMarketOpen();
+            console.log("Market is now open. Starting stock updates...");
+            continue;
         }
     
         if (allUpdated) {
-            console.log("All stocks are updated. Waiting two minutes...");
-            // Wait two minutes (the next update)
-            const timeUntilNextUpdate = updateStockTimeRate - (currentTime % updateStockTimeRate);
-            await wait(timeUntilNextUpdate);
+            console.log("All stocks are updated. Waiting 5 minutes...");
+            // Wait the remaining time until the next update
+            await wait(updateStockTimeRate);
         } else {
             console.log("Some stocks were updated. Continuing process...");
-            // If not all stocks were updated, continue checking after a short break
-            await wait(5000); // 5 seconds delay before the next loop iteration
+            // Short delay before the next loop iteration
+            await wait(5000); // 5 seconds delay
         }
     }
 }
-*/
+
 
 
 async function initStockFetchingService(){
@@ -190,6 +237,8 @@ async function initStockFetchingService(){
     await loadAllSupportedStocks();
 
     console.log("Stock prices loaded: ", stocksUpdates, "\n");
+
+    checkAndUpdateStocks();
 
     console.log("\nReal Time Stock Fetching Service Init Successfully!\n\n");
 };
