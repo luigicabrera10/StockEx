@@ -10,9 +10,6 @@ nodejs_server/testing.js
 nodejs_server/node_modules/
 
 Chakra-UI-Vite-Template-ChainTrust/
-StockEx-Chakra-UI-Vite/node_modules/
-Integration-StockEx/node_modules/
 horizon-ui-chakra-ts-feature-react-table-v8/
-Integration-StockEx/
-Integration2-StockEx/
+StockEx-Chakra-UI-Vite/node_modules/
 # TestingContracts/
