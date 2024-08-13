@@ -245,7 +245,7 @@ async function initHistoricalStockFetchingService() {
 
    console.log("Saved Historical Prices loaded: ", Object.keys(historicalPricesUpdates), "\n");
 
-   updateStocksDaily(); // Start the infinite update loop
+   // updateStocksDaily(); // Start the infinite update loop
    
    // Exmpales
    // console.log("Get history: ", await getPriceHistory("MSFT"));

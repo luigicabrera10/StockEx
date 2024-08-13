@@ -36,9 +36,19 @@ const mutex = new Mutex();
 // FOR MARKET STATE UPDATE -------------------------------------------------------------------------------------------
 
 async function waitForMarketOpen() {
+
     const now = DateTime.now().setZone('America/New_York');
 
-    const marketOpenTime = now.set({ hour: 9, minute: 30, second: 0, millisecond: 0 });
+    const marketOpenTimeToday = now.set({ hour: 9, minute: 30, second: 0, millisecond: 0 });
+
+    let marketOpenTime;
+
+    if (now < marketOpenTimeToday) {
+        marketOpenTime = marketOpenTimeToday;
+    } else {
+        marketOpenTime = marketOpenTimeToday.plus({ days: 1 });
+    }
+
 
     // Calculate time difference in milliseconds
     const timeUntilMarketOpens = marketOpenTime.diff(now).milliseconds;
@@ -53,6 +63,7 @@ async function waitForMarketOpen() {
 }
 
 async function waitForMarketClose() {
+
     const now = DateTime.now().setZone('America/New_York');
 
     // Define the market close time (4:00 PM ET)
@@ -73,6 +84,7 @@ async function waitForMarketClose() {
     await wait(timeUntilMarketCloses);
 
     console.log("Market is now closed.");
+    
 }
 
 async function updateMarketState(){
@@ -293,9 +305,145 @@ async function updateRealTimeStocks(){
 
 // FOR HISTORICAL PRICES UPDATE -------------------------------------------------------------------------------------------
 
+async function getNewPricesForUpload(stock) {
+
+    try {
+
+        // Get the last update date from the contract
+        const lastUpdateState = await readState({
+            LastHistoricalUpdate: stock
+        });
+
+        if (lastUpdateState === null){ // Unable to read state
+            return priceHistory;
+        }
+
+        // Get the price history for the stock
+        const priceHistory = await fetchStockHistoricalPrices(stock);
+
+        // If there's no price history, return null
+        if (!priceHistory) {
+            console.log("NO HISTORY FOUND FOR: ", stock);
+            return null;
+        }
+
+        const lastUpdateDate = lastUpdateState.lastHistoricalUpdate;
+        console.log("Last Updated Date: ", lastUpdateDate); 
+        if (lastUpdateDate === 'null'){ // if null, it will need to set the entire history
+            return priceHistory;
+        }
+
+        // Filter the price history to get only the new prices
+        const newPrices = priceHistory.filter(priceData => {
+            return lastUpdateDate === null || new Date(priceData.datetime) > new Date(lastUpdateDate);
+        });
+
+        if (newPrices.length > 0){
+            return newPrices;
+        }
+        return null;
+
+    } catch (error) {
+        console.error(`Error fetching new prices for stock ${stock}:`, error);
+        return null;
+    }
+
+}
+
+async function parseAndSendHistoricalStockPrices(stock, newPrices){
+    
+    let payload = {
+        AddHistoricalPrices: [
+            stock,
+            []
+        ]
+    }
+
+    for (let i = 0; i < newPrices.length; ++i){
+
+        const newOpen = Math.round(newPrices[i].open * decimal_const);
+        const newHigh = Math.round(newPrices[i].high * decimal_const);
+        const newLow = Math.round(newPrices[i].low * decimal_const);
+        const newClose = Math.round(newPrices[i].close * decimal_const);
+        const newVolume = Math.round(newPrices[i].volume * decimal_const);
+
+        const newCandle = {
+            datetime: newPrices[i].datetime,
+            open: (newOpen > Number.MAX_SAFE_INTEGER) ? newOpen.toLocaleString('fullwide', { useGrouping: false, maximumFractionDigits: 20 }) : newOpen.toString(),
+            high: (newHigh > Number.MAX_SAFE_INTEGER) ? newHigh.toLocaleString('fullwide', { useGrouping: false, maximumFractionDigits: 20 }) : newHigh.toString(),
+            low: (newLow > Number.MAX_SAFE_INTEGER) ? newLow.toLocaleString('fullwide', { useGrouping: false, maximumFractionDigits: 20 }) : newLow.toString(),
+            close: (newClose > Number.MAX_SAFE_INTEGER) ? newClose.toLocaleString('fullwide', { useGrouping: false, maximumFractionDigits: 20 }) : newClose.toString(),
+            volume: (newVolume > Number.MAX_SAFE_INTEGER) ? newVolume.toLocaleString('fullwide', { useGrouping: false, maximumFractionDigits: 20 }) : newVolume.toString()
+        }
+
+        payload.AddHistoricalPrices[1].push(newCandle);
+
+    }
+
+    await mutex.runExclusive(async () => {
+
+        console.log("Sending new historical stock prices for: ", payload.AddHistoricalPrices[0]);
+        console.log(payload.AddHistoricalPrices[1].slice(0,10));
+
+        await sendMessage(payload = payload, gas_limit = 499981924500, vara = 0, wait_time = 23000);
+
+    });
+
+}
+
+async function waitForMarketReOpens() {
+
+    const now = DateTime.now().setZone('America/New_York');
+
+    const marketOpenTimeToday = now.set({ hour: 9, minute: 30, second: 0, millisecond: 0 });
+
+    let marketOpenTime;
+
+    if (now < marketOpenTimeToday) {
+        marketOpenTime = marketOpenTimeToday;
+    } else {
+        marketOpenTime = marketOpenTimeToday.plus({ days: 1 });
+    }
+
+    // Calculate time difference in milliseconds
+    const timeUntilMarketOpens = marketOpenTime.diff(now).milliseconds;
+
+    console.log(`Waiting ${timeUntilMarketOpens / 1000 / 60} minutes until market re-opens...`);
+
+    // Wait until the market opens
+    await wait(timeUntilMarketOpens);
+
+    console.log("Market is open.");
+
+}
+
+
 async function updateHistoricalPrices(){
 
-    console.log( readState("LastHistoricalUpdate", "TSLA") );
+    const supportedStocks = await loadAllSupportedStocks();
+
+    while (true) {
+
+        // for (let stock of supportedStocks.slice(0, 5)) {
+        for (let stock of supportedStocks) {
+
+            console.log("For stock: ", stock);
+
+            const newPrices = await getNewPricesForUpload(stock);
+
+            if (newPrices === null) { // No need to update
+                console.log("No update need: ", stock)
+                continue;
+            }
+
+            await parseAndSendHistoricalStockPrices(stock, newPrices);
+
+        }
+
+        // Wait till next market open to update prices
+        await waitForMarketReOpens();
+
+    }
 
 }
 
@@ -311,12 +459,12 @@ async function main(){
 
     // Update periodically:
 
-    // updateMarketState();
+    updateMarketState();
 
-    // updateCurrencys();
-    // updateCrypto()
+    updateCurrencys();
+    updateCrypto()
 
-    // updateRealTimeStocks();
+    updateRealTimeStocks();
 
     updateHistoricalPrices();
 

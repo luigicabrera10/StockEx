@@ -66,7 +66,7 @@ async function wait(ms) {
 }
 
 // Send a single message using metadata
-async function sendMessage(payload, gas_limit = 98998192450, vara = 0, wait_time = 8000) {
+async function sendMessage(payload, gas_limit = 98998192450, vara = 0, wait_time = 10000) {
     try {
 
         const message = {
@@ -92,37 +92,36 @@ async function sendMessage(payload, gas_limit = 98998192450, vara = 0, wait_time
 
     } catch (error) {
         console.error("Error sending message:", error);
+        await wait(wait_time);  // Wait
     }
 }
 
 
 // Function to read the state from the smart contract
-async function readState(stateName, payload = null) {
+async function readState(payload) {
     try {
         // Load the metadata
         const metadataProgram = ProgramMetadata.from(metaData);
 
-        // Encode the payload if provided
-        const encodedPayload = payload
-            ? metadataProgram.handleState.encode(stateName, payload)
-            : metadataProgram.handleState.encode(stateName);
+        // Read state:
+        const state = await gearApi.programState.read(
+            {
+                programId: myContractId,
+                payload
+            },
+            metadataProgram
+        );
 
-        // Create the state query object
-        const stateQuery = {
-            accountId: myContractId,  // The smart contract address
-            key: encodedPayload,      // The encoded state name (and payload if any)
-            metadata: metadataProgram,
-        };
+        const formatState = state.toJSON();
 
-        // Query the state
-        const state = await gearApi.program.state.read(stateQuery);
+        // console.log('STATE: ');
+        // console.log(formatState);
 
-        console.log(`\nState '${stateName}':`, state.toHuman());
+        return formatState;
 
-        return state.toHuman();  // Return the human-readable state
     } catch (error) {
         console.error("Error reading state:", error);
-        throw error;  // Handle or propagate the error as needed
+        return null;
     }
 }
 
