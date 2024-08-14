@@ -198,6 +198,7 @@ module.exports = {
    updateStockPrice,
 
    fetchStockHistoricalPrices,
+   updateHistoricalPrices,
    isNasdaqMarketOpen,
    
 };

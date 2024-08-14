@@ -2,9 +2,9 @@ const axios = require('axios');
 const fs = require('fs').promises;
 const { DateTime } = require('luxon');
 
-const allSupportedCurrenciesFile = '/home/northsoldier/Documents/Hackathons/Varathon - StockEx/nodejs_server/currency-fetching-service/allCurrencies.txt';
-const allSupportedCryptoFile = '/home/northsoldier/Documents/Hackathons/Varathon - StockEx/nodejs_server/currency-fetching-service/allCrypto.txt';
-const savedExchangeRatesFile = '/home/northsoldier/Documents/Hackathons/Varathon - StockEx/nodejs_server/currency-fetching-service/savedExchangeRates.json';
+const allSupportedCurrenciesFile = '/home/northsoldier/Documents/Hackathons/Varathon - StockEx/DataBase/SupportedSymbols/allCurrencies.txt';
+const allSupportedCryptoFile = '/home/northsoldier/Documents/Hackathons/Varathon - StockEx/DataBase/SupportedSymbols/allCrypto.txt';
+const savedExchangeRatesFile = '/home/northsoldier/Documents/Hackathons/Varathon - StockEx/DataBase/Currencys/savedExchangeRates.json';
 const currencyApiKeyFile = '/home/northsoldier/Documents/Hackathons/Varathon - StockEx/nodejs_server/currency-fetching-service/currencyApiKey.txt';
 const cryptoApiKeyFile = '/home/northsoldier/Documents/Hackathons/Varathon - StockEx/nodejs_server/currency-fetching-service/cryptoApiKey.txt';
 
@@ -80,6 +80,11 @@ async function loadAllSupportedCrypto() {
     }
 }
 
+// Like a sleep
+async function wait(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 async function updateExchangeRates(currencies) {
     // If a currency is not on the dictionary, add the currency to the exchange request array
     // If a currency is on the dictionary, but the lastRefresh is more than updateCurrencyTimeRate add the currency to the exchange request array
@@ -94,20 +99,22 @@ async function updateExchangeRates(currencies) {
 
         const currentTime = new Date().getTime();
         const lastRefreshTime = new Date(exchangeUpdates[currency]?.lastRefresh || 0).getTime();
-        
-        if (!exchangeUpdates[currency] || (currentTime - lastRefreshTime > updateCurrencyTimeRate)) {
-            if (allSupportedCurrencies.includes(currency)){
+
+        if (allSupportedCurrencies.includes(currency)){
+            if (!exchangeUpdates[currency] || (currentTime - lastRefreshTime > updateCurrencyTimeRate)) {
                 requestCurrencies.push(currency);
-            } 
-            else if (allSupportedCrypto.includes(currency)){
+            }
+        } 
+        else if (allSupportedCrypto.includes(currency)){
+            if (!exchangeUpdates[currency] || (currentTime - lastRefreshTime > updateCryptoTimeRate)) {
                 requestCrypto.push(currency);
             }
         }
+        
     });
 
     // If no currency needs an update:
     if (requestCurrencies.length === 0 && requestCrypto.length === 0){
-        // console.log("\nCurrencys updated successfully!");
         return true;
     }
 
@@ -135,7 +142,7 @@ async function updateExchangeRates(currencies) {
 
         if (requestCrypto.length > 0){
 
-            const batchSize = 200;
+            const batchSize = 250;
 
             for (let i = 0; i < requestCrypto.length; i += batchSize) {
                 const batch = requestCrypto.slice(i, i + batchSize);
@@ -153,6 +160,7 @@ async function updateExchangeRates(currencies) {
                 });
 
                 await saveExchangeRates();
+                await wait(1000); // Wait one sec per request
 
             }
 
@@ -160,7 +168,6 @@ async function updateExchangeRates(currencies) {
 
     } catch (error) {
         console.error("Error updating exchange rates: ", error);
-        console.error("Recovering using last fetched price");
         return false;
     }
 

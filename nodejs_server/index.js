@@ -16,6 +16,7 @@ const {
    updateStockPrice,
 
    fetchStockHistoricalPrices,
+   updateHistoricalPrices,
    isNasdaqMarketOpen
 } = require('./fecthDataService');
 
@@ -250,32 +251,38 @@ async function updateRealTimeStocks(){
         
         if (isNasdaqMarketOpen()){
 
-            for (let stock of supportedStocks.slice(0, 5)) {
-            // for (let stock of supportedStocks) {
+            // for (let stock of supportedStocks.slice(0, 5)) {
+            for (let stock of supportedStocks) {
 
                 const lastRefreshTime = getStockLastRefresh(stock)
                     ? new Date(getStockLastRefresh(stock)).getTime()
                     : 0;
         
-                if (currentTime - lastRefreshTime > updateStockTimeRate) {
-                    allUpdated = false; // Mark as not all updated if any stock needs an update
-                    state = await updateStockPrice(stock);
-        
-                    // Pause to respect the API rate limit (60 calls per minute)
-                    await wait(1100); // 1.1 seconds delay between each call
+                state = await updateStockPrice(stock);
+
+                const lastRefreshTime2 = getStockLastRefresh(stock)
+                    ? new Date(getStockLastRefresh(stock)).getTime()
+                    : 0;
+
+                if (lastRefreshTime !== lastRefreshTime2){ // Updated
+                    allUpdated = false
                 }
-        
+                
                 // If the API limit is hit or update failed, pause
                 if (state === false) {
-                    console.log("API limit hit or update failed. Waiting for 61 seconds...");
-                    await wait(61000);
+                    console.log("API limit hit or update failed. Waiting for 60 seconds...");
+                    allUpdated = false;
+                    await wait(60000);
+                }
+                else{
+                    await wait(1100); // 1.1 seconds delay between each call
                 }
             }
 
         }
         else{
 
-            // Send Data ans wait
+            // Send Data and wait
             await parseAndSendRealTimeStockPrices(supportedStocks);
 
             await waitForMarketOpen();
@@ -284,14 +291,14 @@ async function updateRealTimeStocks(){
         }
     
         if (allUpdated) {
-            console.log("All stocks are updated. Waiting 5 minutes...");
+            console.log(`All stocks are updated. Waiting ${updateStockTimeRate / 1000 / 60 } minutes..`);
 
             // Send Data
             await parseAndSendRealTimeStockPrices(supportedStocks);
 
-
             // Wait the remaining time until the next update
             await wait(updateStockTimeRate);
+
         } else {
             console.log("Some stocks were updated. Continuing process...");
 
@@ -328,7 +335,7 @@ async function getNewPricesForUpload(stock) {
         }
 
         const lastUpdateDate = lastUpdateState.lastHistoricalUpdate;
-        console.log("Last Updated Date: ", lastUpdateDate); 
+        // console.log("Last Updated Date: ", lastUpdateDate); 
         if (lastUpdateDate === 'null'){ // if null, it will need to set the entire history
             return priceHistory;
         }
@@ -418,7 +425,7 @@ async function waitForMarketReOpens() {
 }
 
 
-async function updateHistoricalPrices(){
+async function updateHistorical(){
 
     const supportedStocks = await loadAllSupportedStocks();
 
@@ -429,10 +436,11 @@ async function updateHistoricalPrices(){
 
             console.log("For stock: ", stock);
 
+            await updateHistoricalPrices(stock);
             const newPrices = await getNewPricesForUpload(stock);
 
             if (newPrices === null) { // No need to update
-                console.log("No update need: ", stock)
+                console.log("No update need: ", stock, "\n");
                 continue;
             }
 
@@ -466,9 +474,7 @@ async function main(){
 
     updateRealTimeStocks();
 
-    updateHistoricalPrices();
-
-    
+    updateHistorical();
 
 
 }

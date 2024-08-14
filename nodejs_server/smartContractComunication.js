@@ -85,7 +85,7 @@ async function sendMessage(payload, gas_limit = 98998192450, vara = 0, wait_time
             console.log(event.toHuman());
         });
 
-        console.log("\nMessage Sent.");
+        // console.log("\nMessage Sent.");
 
         await wait(wait_time);
             

@@ -4,10 +4,8 @@ const { DateTime } = require('luxon');
 
 let STOCK_API_KEY; // Api key for stock price service
 const stockApiKeyFile = '/home/northsoldier/Documents/Hackathons/Varathon - StockEx/nodejs_server/real-time-stocks-fetching-service/stockApiKey.txt';
-const allSupportedStocksFile = '/home/northsoldier/Documents/Hackathons/Varathon - StockEx/nodejs_server/allStocks.txt';
-const savedStockPricesFile = '/home/northsoldier/Documents/Hackathons/Varathon - StockEx/nodejs_server/real-time-stocks-fetching-service/savedStocksPrices.json';
-const decimal_fix_for_SmartContracts = Math.pow(10, 10); // 10 ** 10
-
+const allSupportedStocksFile = '/home/northsoldier/Documents/Hackathons/Varathon - StockEx/DataBase/SupportedSymbols/allStocks.txt';
+const savedStockPricesFile = '/home/northsoldier/Documents/Hackathons/Varathon - StockEx/DataBase/RealTimeStockPrices/savedStocksPrices.json';
 
 let allSupportedStocks = [] // A list with all currencies that are supported for the api call
 
@@ -17,7 +15,7 @@ let stocksUpdates = { }; // Everything have as base price the USD
 // Set lower
 // let updateStockTimeRate = 2 * 60 * 1000; // 2 minutes in milliseconds
 // let updateStockTimeRate = 5 * 60 * 1000; // 5 minutes in milliseconds
-let updateStockTimeRate = 30 * 60 * 1000; // 5 minutes in milliseconds (for testing)
+let updateStockTimeRate = 30 * 60 * 1000; // 30 minutes in milliseconds (for testing)
 
 
 async function setStockApiKey() {
@@ -91,6 +89,20 @@ async function updateStockPrice(symbol){
     const lastRefreshTime = new Date(stocksUpdates[symbol]?.lastRefresh || 0).getTime();
     if (stocksUpdates[symbol] && (currentTime - lastRefreshTime <= updateStockTimeRate)) return true;
 
+    // What if Nasdaq is closed?
+    if (!isNasdaqMarketOpen()) {
+        const lastMarketCloseTime = DateTime.now()
+            .setZone('America/New_York')
+            .set({ hour: 16, minute: 0, second: 0, millisecond: 0 })
+            .minus({ days: 1 });
+
+        if (new Date(stocksUpdates[symbol]?.lastRefresh || 0) >= lastMarketCloseTime.toJSDate()) {
+            return true;
+        }
+
+        console.log("Market is closed, fetching last available price before closing.");
+    }
+
     // If an update is required:
     console.log("Warning: Updating the following stock: ", symbol);
 
@@ -133,8 +145,6 @@ async function getStockPrice(symbol){
         return null;
     }
 
-    await updateStockPrice(symbol);
-
     if (! stocksUpdates[symbol] ){
         console.log("Stock price didnt found")
         return null;
@@ -173,21 +183,6 @@ const fetchAllStockSymbols = async () => {
         throw error;
     }
 };
-
-
-async function waitForMarketOpen() {
-    const now = DateTime.now().setZone('America/New_York');
-
-    const marketOpenTime = now.set({ hour: 9, minute: 30, second: 0, millisecond: 0 });
-
-    // Calculate time difference in milliseconds
-    const timeUntilMarketOpens = marketOpenTime.diff(now).milliseconds;
-
-    console.log(`Market is closed. Waiting ${timeUntilMarketOpens / 1000 / 60} minutes until market opens...`);
-
-    // Wait until the market opens
-    await wait(timeUntilMarketOpens);
-}
 
 
 async function initStockFetchingService(){

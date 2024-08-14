@@ -1,9 +1,11 @@
 const axios = require('axios');
 const fs = require('fs').promises;
+const path = require('path');
 
 // Will be 1 day every time
 let historicalPricesUpdates = {};
-/* Example { 
+/* Example:
+{ 
    'TSLA': {
       'lastRefresh': '2024-07-24T23:59:59Z', 
       'serie': [ 
@@ -38,9 +40,10 @@ let HISTORICAL_API_KEY;
 let allSupportedHistoricalStocks = ['TSLA', 'MSFT', 'IBM'];
 let nextUpdate = new Date().getTime();
 
-const allSupportedHistoricalStocksFile = '/home/northsoldier/Documents/Hackathons/Varathon - StockEx/nodejs_server/allStocks.txt';
+const allSupportedHistoricalStocksFile = '/home/northsoldier/Documents/Hackathons/Varathon - StockEx/DataBase/SupportedSymbols/allStocks.txt';
 const historicalStockApiKeyFile = '/home/northsoldier/Documents/Hackathons/Varathon - StockEx/nodejs_server/historical-stocks-fetching-service/historicalStockApiKeyTwelveData.txt';
 const savedHistoricalStockPricesFile = '/home/northsoldier/Documents/Hackathons/Varathon - StockEx/nodejs_server/historical-stocks-fetching-service/savedHistoricalStocksPrices.json';
+const savedHistoricalStockPricesFolder = '/home/northsoldier/Documents/Hackathons/Varathon - StockEx/DataBase/HistoricalStockPrices';
 
 const updateRateHistoricalStocks = 24 * 60 * 60 * 1000;
 
@@ -57,21 +60,43 @@ async function setHistoricalStockApiKey() {
 
 async function loadSavedHistoricalStockPrices() {
    try {
-       const data = await fs.readFile(savedHistoricalStockPricesFile, 'utf-8');
-       historicalPricesUpdates = JSON.parse(data);
+      for (const symbol of allSupportedHistoricalStocks) {
+         const filePath = path.join(savedHistoricalStockPricesFolder, `${symbol}.json`);
+         try {
+            const data = await fs.readFile(filePath, 'utf-8');
+            historicalPricesUpdates[symbol] = JSON.parse(data);
+         } catch (error) {
+            console.error(`Error reading the saved stock prices file "${filePath}":`, error);
+         }
+      }
    } catch (error) {
-       console.error("Error reading the saved stock prices file \"", savedHistoricalStockPricesFile, "\":", error);
+      console.error("Error loading saved historical stock prices:", error);
    }
 }
 
-async function saveHistoricalStockPrices() {
+
+async function saveHistoricalStockPrices(symbol = null) {
    try {
-      const data = JSON.stringify(historicalPricesUpdates, null, 2);
-      await fs.writeFile(savedHistoricalStockPricesFile, data, 'utf-8');
+      if (symbol) {
+         // Save the specific symbol to its own JSON file
+         const filePath = path.join(savedHistoricalStockPricesFolder, `${symbol}.json`);
+         const data = JSON.stringify(historicalPricesUpdates[symbol], null, 2);
+         await fs.writeFile(filePath, data, 'utf-8');
+         // console.log(`Saved historical prices for ${symbol} to file "${filePath}".`);
+      } else {
+         // Save all symbols
+         for (const sym of allSupportedHistoricalStocks) {
+            const filePath = path.join(savedHistoricalStockPricesFolder, `${sym}.json`);
+            const data = JSON.stringify(historicalPricesUpdates[sym], null, 2);
+            await fs.writeFile(filePath, data, 'utf-8');
+            // console.log(`Saved historical prices for ${sym} to file "${filePath}".`);
+         }
+      }
    } catch (error) {
-      console.error("Error saving the stock prices to file \"", savedHistoricalStockPricesFile, "\":", error);
+      console.error("Error saving the stock prices:", error);
    }
 }
+
 
 async function loadAllHistoricalSupportedStocks() {
    try {
@@ -91,7 +116,7 @@ async function callHistoryPriceApi(symbol) {
 
    if (!isStockHistorySupported(symbol)) {
       console.log("NOT SUPPORTED SYMBOL: ", symbol);
-      return false;
+      return null;
    }
 
    const url = `https://api.twelvedata.com/time_series?symbol=${symbol}&interval=1day&outputsize=5000&apikey=${HISTORICAL_API_KEY}`;
@@ -108,15 +133,15 @@ async function callHistoryPriceApi(symbol) {
       // Handle api limit rate
       if (keys.includes("message")) {
          console.log("API ERROR ON SYMBOL '", symbol,": ", response.data.message);
-         return false;
+         return null;
       }
 
       return response.data.values;
    } catch (error) {
       console.error('Error fetching data:', error);
-      return false;
+      return null;
    }
-   return true;
+
 }
 
 async function updateHistoricalPrices(symbol){
@@ -144,7 +169,7 @@ async function updateHistoricalPrices(symbol){
       const dataSerie = await callHistoryPriceApi(symbol);
       // console.log("Response: ", dataSerie);
 
-      if (dataSerie === false) {
+      if (dataSerie === null) {
          console.log("No Data, no update");
          return false;
       }
@@ -152,7 +177,7 @@ async function updateHistoricalPrices(symbol){
       const currentDate = new Date();
       
       // Get the keys of the main object
-      const keys = Object.keys(dataSerie);
+      // const keys = Object.keys(dataSerie);
       // const headerString = keys[1];
 
       historicalPricesUpdates[symbol] = {
@@ -168,8 +193,8 @@ async function updateHistoricalPrices(symbol){
       return false
    }
 
+   await saveHistoricalStockPrices(symbol);
 
-   await saveHistoricalStockPrices();
    return true;
 }
 
@@ -192,47 +217,6 @@ async function getPriceHistory(symbol){
 
 async function wait(ms) {
    return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-async function updateStocksDaily() {
-   while (true) {
-      const currentTime = new Date().getTime();
-      let allUpdated = true;
-      let state;
-
-      for (let stock of allSupportedHistoricalStocks) {
-         const lastRefreshTime = historicalPricesUpdates[stock]
-            ? new Date(historicalPricesUpdates[stock]['lastRefresh']).getTime()
-            : 0;
-
-         if (currentTime - lastRefreshTime > updateRateHistoricalStocks) {
-            allUpdated = false;
-            state = await updateHistoricalPrices(stock);
-            // if (!state) console.log("Failed to update stock: ", stock);
-
-
-            // Pause to respect the API rate limit (8 calls per minute)
-            await wait(7500); // 7.5 seconds delay between each call
-         }
-
-         // If the API limit is hit (8 calls), wait for 65 seconds
-         if (Object.keys(historicalPricesUpdates).length % 8 === 0 || state === false) {
-            console.log("API limit hit. Waiting for 61 seconds...");
-            await wait(61000);
-         }
-      }
-
-      if (allUpdated) {
-         console.log("All stocks are updated. Waiting until the next day...");
-         // Wait until the next day (the next update cycle)
-         const timeUntilNextDay = updateRateHistoricalStocks - (currentTime % updateRateHistoricalStocks);
-         await wait(timeUntilNextDay);
-      } else {
-         console.log("Some stocks were updated. Continuing process...");
-         // If not all stocks were updated, continue checking after a short break
-         await wait(5000); // 5 seconds delay before the next loop iteration
-      }
-   }
 }
 
 
