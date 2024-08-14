@@ -119,7 +119,7 @@ async function callHistoryPriceApi(symbol) {
       return null;
    }
 
-   const url = `https://api.twelvedata.com/time_series?symbol=${symbol}&interval=1day&outputsize=5000&apikey=${HISTORICAL_API_KEY}`;
+   const url = `https://api.twelvedata.com/time_series?symbol=${symbol}&interval=1day&outputsize=2500&apikey=${HISTORICAL_API_KEY}`;
 
    try {
       const response = await axios.get(url, {

@@ -197,11 +197,12 @@ pub enum Query {
     SinglePriceRequiredFunds(InputSingleStockPrice),
     MultiplePriceRequiredFunds(InputMultipleStockPrices),
     CurrencyExchangeRequiredFunds,
-    StockHistoryRequiredFunds(u128),
+    StockHistoryRequiredFunds(String, u128),
 
     SupportedCurrencys,
     SupportedRealTimeStockPrices,
     SupportedHistoricalStockPrices,
+    SupportedHistoricalStockPricesRange(String),
 
     LastHistoricalUpdate(String),
 
@@ -232,6 +233,7 @@ pub enum QueryReply {
     SupportedCurrencys(Vec<String>),
     SupportedRealTimeStockPrices(Vec<String>),
     SupportedHistoricalStockPrices(Vec<String>),
+    SupportedHistoricalStockPricesRange(u128),
 
     LastHistoricalUpdate(String),
 

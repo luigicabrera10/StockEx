@@ -41,6 +41,26 @@ pub struct ProviderStruct {
 
 }
 
+
+// sqrt xd
+fn sqrt_u128(n: u128) -> u128 {
+    if n == 0 {
+        return 0;
+    }
+    
+    let mut x = n;
+    let mut y = (x + 1) / 2;
+    
+    while y < x {
+        x = y;
+        y = (x + n / x) / 2;
+    }
+    
+    x
+}
+
+
+
 // Create a implementation on State
 impl ProviderStruct {
 
@@ -273,19 +293,8 @@ impl ProviderStruct {
 
         let actor_id = msg::source();
         let transferred_value = msg::value();
-
-        let candles_limit = min(max(1, limit), 5000);
-        let required_fee: u128 = (self.fees_per_query / 5) as u128 * candles_limit;
-
-        if self.handle_transfer_funds(actor_id, transferred_value, required_fee) == false {
-            let extra_funds_entry = self.extra_funds_deposited.entry(actor_id).or_insert(transferred_value);
-            return Err(Errors::InsufficientFundsAttached{
-                required_founds: required_fee,
-                founds_on_your_account: *extra_funds_entry,
-            });
-        }
-
-        // Check if the symbol exists in stock_real_time_prices
+    
+        // Get the historical data
         let history: Vec<Candle> = match self.stock_historical_prices.get(&stock) {
             Some(candles) => (*candles).clone(),
             None => {
@@ -294,16 +303,31 @@ impl ProviderStruct {
                 });
             }
         };
+    
+        // Set candles_limit based on the length of the history vector
+        let candles_limit: u128 = min(max(1, limit), history.len() as u128);
 
+        // Calculate the required funds
+        let required_fee: u128 = 1000000 as u128 * sqrt_u128(self.fees_per_query * candles_limit * 2) as u128;
+
+        if self.handle_transfer_funds(actor_id, transferred_value, required_fee) == false {
+            let extra_funds_entry = self.extra_funds_deposited.entry(actor_id).or_insert(transferred_value);
+            return Err(Errors::InsufficientFundsAttached{
+                required_founds: required_fee,
+                founds_on_your_account: *extra_funds_entry,
+            });
+        }
+    
         let mut final_answer: Vec<Candle> = Vec::new();
-        for i in 0..candles_limit{
+        for i in 0..candles_limit {
             final_answer.push(history[i as usize].clone());
         }
-
+    
         Ok(Events::SuccessfulStockHistoryRequest {
             candles: final_answer
         })
     }
+    
 
     pub fn request_refund(&mut self) -> Result<Events, Errors> {
 
@@ -535,7 +559,14 @@ impl ProviderStruct {
         // Add the new candles at the start of the current history
         let mut new_history = history;
         new_history.extend(current_history.iter().cloned());  // Append the existing history at the end
-        *current_history = new_history;  // Replace the history
+    
+        // If the total number of elements exceeds 2500, trim the tail
+        if new_history.len() > 2500 {
+            new_history.truncate(2500);  // Keep the first 2500 elements, which includes the most recent data
+        }
+    
+        // Replace the current history with the new, potentially trimmed, history
+        *current_history = new_history;
     
         Ok(Events::HistoricalPricesAddedSuccessfully)
     }
@@ -662,7 +693,18 @@ extern "C" fn state() {
             QueryReply::MultiplePriceRequiredFunds(funds)
         },
         Query::CurrencyExchangeRequiredFunds => QueryReply::CurrencyExchangeRequiredFunds(state.fees_per_query),
-        Query::StockHistoryRequiredFunds(input) => QueryReply::StockHistoryRequiredFunds((state.fees_per_query / 5) as u128 * input),
+        Query::StockHistoryRequiredFunds(stock, size) => {
+            if let Some(current_history) = state.stock_historical_prices.get(&stock) {
+                let candles_limit: u128 = min(max(1, size), current_history.len() as u128);
+        
+                // Calculate the required funds
+                let required_funds: u128 = 1000000 as u128 * sqrt_u128(state.fees_per_query * candles_limit * 2) as u128;
+        
+                QueryReply::StockHistoryRequiredFunds(required_funds)
+            } else {
+                QueryReply::StockHistoryRequiredFunds(0)
+            }
+        }
         
         Query::SupportedCurrencys => {
             let supported_currencys: Vec<String> = state.currency_prices.keys().cloned().collect();
@@ -676,6 +718,13 @@ extern "C" fn state() {
             let supported_stocks: Vec<String> = state.stock_historical_prices.keys().cloned().collect();
             QueryReply::SupportedHistoricalStockPrices(supported_stocks)
         } 
+        Query::SupportedHistoricalStockPricesRange(stock) => {
+            if let Some(current_history) = state.stock_historical_prices.get(&stock) {
+                QueryReply::SupportedHistoricalStockPricesRange(current_history.len() as u128)
+            } else {
+                QueryReply::SupportedHistoricalStockPricesRange(0)
+            }
+        }
         
         Query::LastHistoricalUpdate(input) => {
             if let Some(current_history) = state.stock_historical_prices.get(&input) {

@@ -142,7 +142,7 @@ async function updateExchangeRates(currencies) {
 
         if (requestCrypto.length > 0){
 
-            const batchSize = 250;
+            const batchSize = 300;
 
             for (let i = 0; i < requestCrypto.length; i += batchSize) {
                 const batch = requestCrypto.slice(i, i + batchSize);
