@@ -243,6 +243,7 @@ The contract replies with the following data based on state queries:
 ### Compile the smart contract by running the following command:
 
 ```bash
+cd Data-Provider-Smart-Contract/
 cargo build --release
 ```
 
