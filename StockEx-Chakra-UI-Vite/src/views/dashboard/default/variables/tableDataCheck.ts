@@ -1,61 +1,46 @@
-import { ReadOperations } from "/home/northsoldier/Documents/Hackathons/Varathon - StockEx/StockEx-Chakra-UI-Vite/src/smartContractComunication/read/ReadOperations";
-
 type RowObj = {
-	stock: string;
-	investment: number;
-	openPrice: number;
-	actualPrice: number;
-	earning: number;
-	leverage: number;
+	name: [string, boolean];
+	progress: string;
+	quantity: number;
 	date: string;
+	info: boolean;
 };
-
 
 const tableDataCheck: RowObj[] = [
 	{
-		stock: 'TSLA',
-		investment: 2458,
-		openPrice: 2458,
-		actualPrice: 16,
-		earning: 8,
-		leverage: 1,
+		name: [ 'Horizon UI PRO', true ],
+		quantity: 2458,
+		progress: '17.5%',
 		date: '12 Jan 2021',
+		info: true
 	},
 	{
-		stock: 'MSFT',
-		investment: 1485,
-		openPrice: 2458,
-		actualPrice: 16,
-		earning: 8,
-		leverage: 1,
+		name: [ 'Horizon UI Free', true ],
+		quantity: 1485,
+		progress: '10.8%',
 		date: '21 Feb 2021',
+		info: true
 	},
 	{
-		stock: 'META',
-		investment: 1024,
-		openPrice: 2458,
-		actualPrice: 16,
-		earning: 8,
-		leverage: 1,
+		name: [ 'Weekly Update', true ],
+		quantity: 1024,
+		progress: '21.3%',
 		date: '13 Mar 2021',
+		info: true
 	},
 	{
-		stock: 'SONY',
-		investment: 858,
-		openPrice: 2458,
-		actualPrice: 16,
-		earning: 8,
-		leverage: 1,
+		name: [ 'Venus 3D Asset', true ],
+		quantity: 858,
+		progress: '31.5%',
 		date: '24 Jan 2021',
+		info: true
 	},
 	{
-		stock: 'NVDA',
-		investment: 258,
-		openPrice: 2458,
-		actualPrice: 16,
-		earning: 8,
-		leverage: 1,
+		name: [ 'Marketplace', true ],
+		quantity: 258,
+		progress: '12.2%',
 		date: '24 Oct 2022',
+		info: true
 	}
 ];
 

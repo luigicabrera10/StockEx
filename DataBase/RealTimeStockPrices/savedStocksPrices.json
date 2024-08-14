@@ -1,43 +1,43 @@
 {
   "AAPL": {
-    "lastRefresh": "2024-08-13T20:00:01.000Z",
-    "price": 221.27
+    "lastRefresh": "2024-08-14T14:15:35.000Z",
+    "price": 221.4394
   },
   "MSFT": {
-    "lastRefresh": "2024-08-13T20:00:01.000Z",
-    "price": 414.01
+    "lastRefresh": "2024-08-14T14:15:43.000Z",
+    "price": 414.15
   },
   "NVDA": {
-    "lastRefresh": "2024-08-13T20:00:00.000Z",
-    "price": 116.14
+    "lastRefresh": "2024-08-14T14:15:23.000Z",
+    "price": 114.9356
   },
   "TSLA": {
-    "lastRefresh": "2024-08-13T20:00:00.000Z",
-    "price": 207.83
+    "lastRefresh": "2024-08-14T14:15:03.000Z",
+    "price": 202
   },
   "GOOGL": {
-    "lastRefresh": "2024-08-13T20:00:01.000Z",
-    "price": 164.16
+    "lastRefresh": "2024-08-14T14:15:55.000Z",
+    "price": 157.74
   },
   "AMZN": {
-    "lastRefresh": "2024-08-13T20:00:01.000Z",
-    "price": 170.23
+    "lastRefresh": "2024-08-14T14:16:17.000Z",
+    "price": 170.04
   },
   "META": {
-    "lastRefresh": "2024-08-13T20:00:01.000Z",
-    "price": 528.54
+    "lastRefresh": "2024-08-14T14:15:56.000Z",
+    "price": 530
   },
   "AZN": {
     "lastRefresh": "2024-08-13T20:00:01.000Z",
     "price": 83.37
   },
   "SONY": {
-    "lastRefresh": "2024-08-13T20:00:01.000Z",
-    "price": 89.06
+    "lastRefresh": "2024-08-14T14:15:54.000Z",
+    "price": 88.41
   },
   "LLY": {
-    "lastRefresh": "2024-08-13T20:00:02.000Z",
-    "price": 908.05
+    "lastRefresh": "2024-08-14T14:14:58.000Z",
+    "price": 926.85
   },
   "TMO": {
     "lastRefresh": "2024-08-13T20:00:02.000Z",
@@ -56,44 +56,44 @@
     "price": 172.37
   },
   "SMFG": {
-    "lastRefresh": "2024-08-13T20:00:02.000Z",
-    "price": 12.75
+    "lastRefresh": "2024-08-14T14:17:18.000Z",
+    "price": 12.67
   },
   "ORCL": {
-    "lastRefresh": "2024-08-13T20:00:02.000Z",
-    "price": 134.26
+    "lastRefresh": "2024-08-14T14:15:32.000Z",
+    "price": 134.635
   },
   "CRM": {
     "lastRefresh": "2024-08-13T20:00:02.000Z",
     "price": 254.6
   },
   "TSM": {
-    "lastRefresh": "2024-08-13T20:00:01.000Z",
-    "price": 172.34
+    "lastRefresh": "2024-08-14T14:15:33.000Z",
+    "price": 167.68
   },
   "AVGO": {
-    "lastRefresh": "2024-08-13T20:00:01.000Z",
-    "price": 156.16
+    "lastRefresh": "2024-08-14T14:15:29.000Z",
+    "price": 155.46
   },
   "KO": {
-    "lastRefresh": "2024-08-13T20:00:02.000Z",
-    "price": 68.46
+    "lastRefresh": "2024-08-14T14:17:03.000Z",
+    "price": 68.685
   },
   "ABBV": {
-    "lastRefresh": "2024-08-13T20:00:02.000Z",
-    "price": 191.23
+    "lastRefresh": "2024-08-14T14:16:18.000Z",
+    "price": 192.37
   },
   "UNH": {
-    "lastRefresh": "2024-08-13T20:00:01.000Z",
-    "price": 574.24
+    "lastRefresh": "2024-08-14T14:16:58.000Z",
+    "price": 580.175
   },
   "MRK": {
-    "lastRefresh": "2024-08-13T20:00:02.000Z",
-    "price": 114.39
+    "lastRefresh": "2024-08-14T14:16:56.000Z",
+    "price": 111.905
   },
   "MA": {
-    "lastRefresh": "2024-08-13T20:00:02.000Z",
-    "price": 459.36
+    "lastRefresh": "2024-08-14T14:17:06.000Z",
+    "price": 458.485
   },
   "NVS": {
     "lastRefresh": "2024-08-13T20:00:01.000Z",
@@ -108,24 +108,24 @@
     "price": 195.33
   },
   "NVO": {
-    "lastRefresh": "2024-08-13T20:00:02.000Z",
-    "price": 133.57
+    "lastRefresh": "2024-08-14T14:16:23.000Z",
+    "price": 134.04
   },
   "LIN": {
     "lastRefresh": "2024-08-13T20:00:01.000Z",
     "price": 449.7
   },
   "WMT": {
-    "lastRefresh": "2024-08-13T20:00:01.000Z",
-    "price": 68.13
+    "lastRefresh": "2024-08-14T14:15:13.000Z",
+    "price": 68.515
   },
   "JNJ": {
-    "lastRefresh": "2024-08-13T20:00:02.000Z",
-    "price": 158.39
+    "lastRefresh": "2024-08-14T14:16:04.000Z",
+    "price": 159.05
   },
   "BAC": {
-    "lastRefresh": "2024-08-13T20:00:02.000Z",
-    "price": 38.46
+    "lastRefresh": "2024-08-14T14:15:24.000Z",
+    "price": 38.54
   },
   "TM": {
     "lastRefresh": "2024-08-13T20:00:01.000Z",
@@ -140,16 +140,16 @@
     "price": 211.02
   },
   "JPM": {
-    "lastRefresh": "2024-08-13T20:00:02.000Z",
-    "price": 207.94
+    "lastRefresh": "2024-08-14T14:16:23.000Z",
+    "price": 208.79
   },
   "ADBE": {
     "lastRefresh": "2024-08-13T20:00:01.000Z",
     "price": 535.22
   },
   "COST": {
-    "lastRefresh": "2024-08-13T20:00:01.000Z",
-    "price": 864.82
+    "lastRefresh": "2024-08-14T14:15:28.000Z",
+    "price": 862.68
   },
   "QCOM": {
     "lastRefresh": "2024-08-13T20:00:00.000Z",
@@ -160,16 +160,16 @@
     "price": 81.1
   },
   "XOM": {
-    "lastRefresh": "2024-08-13T20:00:02.000Z",
-    "price": 117.86
+    "lastRefresh": "2024-08-14T14:15:58.000Z",
+    "price": 118.8101
   },
   "PYPL": {
     "lastRefresh": "2024-08-13T20:00:01.000Z",
     "price": 65.11
   },
   "CVX": {
-    "lastRefresh": "2024-08-13T20:00:02.000Z",
-    "price": 144.15
+    "lastRefresh": "2024-08-14T14:15:48.000Z",
+    "price": 144.3
   },
   "WFC": {
     "lastRefresh": "2024-08-13T20:00:17.000Z",
@@ -180,12 +180,12 @@
     "price": 45.37
   },
   "V": {
-    "lastRefresh": "2024-08-13T20:00:02.000Z",
-    "price": 260.13
+    "lastRefresh": "2024-08-14T14:16:54.000Z",
+    "price": 260.17
   },
   "HD": {
-    "lastRefresh": "2024-08-13T20:00:02.000Z",
-    "price": 350.07
+    "lastRefresh": "2024-08-14T14:16:03.000Z",
+    "price": 355.29
   },
   "IBM": {
     "lastRefresh": "2024-08-13T20:00:02.000Z",
@@ -196,7 +196,7 @@
     "price": 268.71
   },
   "PG": {
-    "lastRefresh": "2024-08-13T20:00:02.000Z",
-    "price": 167.29
+    "lastRefresh": "2024-08-14T14:16:49.000Z",
+    "price": 168.4
   }
 }

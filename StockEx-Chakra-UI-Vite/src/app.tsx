@@ -16,7 +16,7 @@ function Component() {
   // App with context
   return (
     <>
-      <Header isAccountVisible={isAccountReady} /> 
+      {/* <Header isAccountVisible={isAccountReady} />  */}
       {isAppReady ? <Routing /> : <ApiLoader /> } 
       {/* <Routing /> */}
     </>

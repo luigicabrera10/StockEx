@@ -125,7 +125,7 @@ export const inputStyles = {
 					field: {
 						bg: mode('transparent', 'navy.800')(props),
 						border: '0px solid transparent',
-						fontSize: '0px',
+						fontSize: '17px',
 						p: '10px',
 						_placeholder: { color: 'secondaryGray.600' }
 					},
