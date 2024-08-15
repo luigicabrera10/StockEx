@@ -1,5 +1,15 @@
 import Table from './CheckTable';
 
+
+function formatDate(dateString: String) {
+   const date = new Date(dateString);
+   const day = String(date.getUTCDate()).padStart(2, '0');
+   const month = String(date.getUTCMonth() + 1).padStart(2, '0'); // Months are zero-based
+   const year = String(date.getUTCFullYear()).slice(-2); // Get last two digits of the year
+
+   return `${day} - ${month} - ${year}`;
+}
+
 export default function OperationTable(props: { 
    tableData: any, 
    opState: string, 
@@ -17,18 +27,15 @@ export default function OperationTable(props: {
    const { earnings } = props;
    const { leverage } = props;
 
-   // console.log("STOCK ARRIVING: ", stock)
-
    console.log("Table Data befor: ", tableData);
 
-   if (opState === 'active') tableData = tableData.filter(operation => operation.closed_date === "-");
-   else if (opState === 'closed') tableData = tableData.filter(operation => operation.closed_date !== "-");
+   if (opState === 'active') tableData = tableData.filter(operation => operation.closed_date === "");
+   else if (opState === 'closed') tableData = tableData.filter(operation => operation.closed_date !== "");
 
-   if (opType === 'buy') tableData = tableData.filter(operation => operation.opType === "Buy");
-   else if (opType === 'sell') tableData = tableData.filter(operation => operation.opType === "Sell");
+   if (opType === 'buy') tableData = tableData.filter(operation => operation.opType == true);
+   else if (opType === 'sell') tableData = tableData.filter(operation => operation.opType == false);
    
    if (stock !== 'any'){
-      console.log("AAA")
       tableData = tableData.filter(operation => operation.stock === stock);
    }
 
@@ -37,8 +44,22 @@ export default function OperationTable(props: {
       earnings[0] <= operation.earning && operation.earning <= earnings[1]
    );
    tableData = tableData.filter(operation => 
-      leverage[0] <= parseInt(operation.leverage.split(' ')[1],10) && parseInt(operation.leverage.split(' ')[1],10) <= leverage[1]
+      leverage[0] <= operation.leverage && operation.leverage <= leverage[1]
    );
+
+   tableData = tableData.map((op) => {
+      return {
+         stock: op.stock, 
+         investment: "$ " + op.investment,
+         opType: op.opType ? "Sell" : "Buy",
+         openPrice: "$ " + op.openPrice,
+         actualPrice: "$ " + op.actualPrice,
+         earning: op.earning >= 0 ? "+ $ " + Math.abs(op.earning) : "- $ " + Math.abs(op.earning),
+         open_date: formatDate(op.open_date), 
+         closed_date: op.closed_date == "" ? " - " : formatDate(op.closed_date), 
+         leverage: "X " + op.leverage
+      }
+   })
    
    console.log("Table Data after: ", tableData);
 

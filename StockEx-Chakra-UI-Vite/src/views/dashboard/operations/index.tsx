@@ -44,13 +44,43 @@ import {Slider, SliderTrack, SliderFilledTrack, SliderThumb, Text, Stack } from 
 import { RangeSlider, RangeSliderTrack, RangeSliderFilledTrack, RangeSliderThumb } from '@chakra-ui/react';
 
 import { AllOperations } from '@/smartContractComunication/read/AllOperations';
-// import { ClosedOperations } from '@/smartContractComunication/read/ClosedOperations';
-// import { ActiveOperations } from '@/smartContractComunication/read/ActiveOperations';
+import { CloseOperation } from '@/smartContractComunication/send/CloseOperation';
+import fetchRealTimeStockPrices from '@/dataFetching/fetchRealTimeStockPrices'
+
 
 import React, { useState, useEffect } from 'react';
 import { web3Enable, web3Accounts } from '@polkadot/extension-dapp';
 
 import {getHexAdress} from '../../../utils/getHexAdress';
+
+
+const useRealTimeStockPrices = () => {
+   const [prices, setPrices] = useState<any | null>(null);
+   const [loading, setLoading] = useState<boolean>(true);
+   const [error, setError] = useState<string | null>(null);
+
+   useEffect(() => {
+      const getPrices = async () => {
+         try {
+            const pricesFetched = await fetchRealTimeStockPrices();
+            if (pricesFetched === null) {
+               setError('Failed to fetch stock prices');
+            } else {
+               setPrices(pricesFetched);
+            }
+         } catch (error) {
+            setError('An unexpected error occurred');
+         } finally {
+            setLoading(false);
+         }
+      };
+
+      getPrices();
+   }, []); // Empty dependency array means this effect runs once when the component mounts
+
+   return { prices, loading, error };
+};
+
 
 export default function UserReports() {
 
@@ -58,7 +88,7 @@ export default function UserReports() {
 	const brandColor = useColorModeValue('brand.500', 'white');
 	const boxBg = useColorModeValue('secondaryGray.300', 'whiteAlpha.100');
 
-	const defaultValues = [0, 10000];
+	const decimalConst = Math.pow(10, 12);
 
 	// For connecting polkadot wallet:
 	const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
@@ -74,9 +104,19 @@ export default function UserReports() {
 	const [EarningsRange, setEarningsRange] = useState([0, 10000]);
 	const [MinMaxEarnings, setMinMaxEarnings] = useState([0, 10000]);
 
-	
+
+
+	// fetch Prices:
+	// const [prices, setPrices] = useState(null);
+	// const [loading, setLoading] = useState(true);
+
+	const { prices, loading, error } = useRealTimeStockPrices();
+
 
 	
+
+
+	// Wallet
 	useEffect(() => {
 		// localStorage.setItem('attemptedLogin', 'true');
 		const attemptedLogin = localStorage.getItem('attemptedLogin');
@@ -107,6 +147,19 @@ export default function UserReports() {
 	// Change the account
 	let accountHexa: string = getHexAdress();
 
+
+	// useEffect(() => {
+	// 	if (loading){
+	// 		const getPrices = async () => {
+	// 			const pricesFetched = await fetchRealTimeStockPrices();
+	// 			setPrices(pricesFetched);
+	// 			setLoading(false);
+	// 		};
+	// 		getPrices();
+	// 	}
+	// }, []);
+
+
 	// Handle filters:
 
 	const handleOperationStateChange = (event) => {
@@ -135,7 +188,7 @@ export default function UserReports() {
 		if (num === 0) return 0;
 	 
 		const absNum = Math.abs(num);
-		const magnitude = Math.pow(10, Math.floor(Math.log10(absNum)));
+		const magnitude = Math.pow(10, Math.max(Math.floor(Math.log10(absNum)), 1));
 	 
 		let roundedNum = Math.ceil(absNum / magnitude) * magnitude;
 	 
@@ -148,34 +201,36 @@ export default function UserReports() {
 		const absNum = Math.abs(num);
 		const magnitude = Math.pow(10, Math.floor(Math.log10(absNum)));
 	 
-		let roundedNum = Math.floor(absNum / magnitude) * magnitude;
+		let roundedNum = Math.ceil(absNum / magnitude) * magnitude;
 	 
 		return num < 0 ? -roundedNum : roundedNum;
 	}
 
 	const getMaxMinEarnings = (finalOperations) : number[] => {
-		let min = null, max = null;
-		finalOperations.forEach( (op) => {
-			// const actualPrice = op.stock == 'FB' ? 1100000000000 / Math.pow(10,10) : 350000000000 / Math.pow(10,10);
-			const actualPrice = 1100000000000 / Math.pow(10,10) ;
-			const investment = op.investment; // Assuming this is directly mapped
-			const openPrice = op.openPrice;
-			const earning = Math.round( parseInt(op.leverage.split(' ')[1],10) * investment * ((actualPrice / openPrice ) - 1) , 3) ; // You should replace this with actual earning calculation
-			if (min == null || earning < min) min = earning;
-			if (max == null || earning > max) max = earning;
-		});
-		if (min == null) min = 0;
-		if (max == null) max = 10000;
 
-		if (min < 0) min = Math.ceil(min);
+		if (finalOperations.length == 0) {
+			return [0, 10000]
+		}
+
+		let min: number = Number.MAX_VALUE, max:number = -Number.MAX_VALUE;
+		finalOperations.forEach( (op) => {
+			const earning: number = op.earning; // You should replace this with actual earning calculation
+			min = Math.min(earning, min);
+			max = Math.max(earning, max);
+			console.log("Max: ", max);
+		});
+
+		console.log("Final min: ", min);
+		console.log("Final max: ", max);
+
+		if (min < 0) min = Math.floor(min);
 		else min = 0;
 
-		if (max < 0) max = Math.floor(max);
+		if (max < 0) max = 0;
 		else max = Math.ceil(max);
 
 		max = prettyNumberMax(max);
 		min = prettyNumberMin(min);
-
 
 		return [min, max];
 	}
@@ -212,24 +267,44 @@ export default function UserReports() {
 	if (data !== undefined && data !== null){
 
 		finalOperations = data.allOperations.map(op => {
-			// Placeholder values for demonstration; you'll need to adjust them
-			// const actualPrice = op.stock == 'FB' ? 1100000000000 / Math.pow(10,10) : 350000000000 / Math.pow(10,10);
-			const actualPrice = 1100000000000 / Math.pow(10,10) ;
 
-			const investment = op.investment / Math.pow(10,10); // Assuming this is directly mapped
-			const openPrice = op.openPrice / Math.pow(10,10);
-			const earning = Math.round( op.leverage * investment * ((actualPrice / openPrice ) - 1), 3 ); // You should replace this with actual earning calculation
+			// const symbol = op.tickerSymbol;
+			let symbol = op.tickerSymbol === 'TSL' ? 'TSLA' : op.tickerSymbol;
+			symbol = op.tickerSymbol === 'FB' ? 'META' : symbol;
+			symbol = op.tickerSymbol === 'NVDIA' ? 'NVDA' : symbol;
+			// XD
+
+			const investment = (op.investment / decimalConst).toFixed(2); 
+			const openPrice = (op.openPrice / decimalConst).toFixed(2);
+
+			let actualPrice = openPrice; // Default to openPrice if data is not available
+
+			if (!loading && prices !== null) {
+				actualPrice = prices[symbol]["price"] || openPrice; // Fallback to openPrice if symbol not found
+			}
+
+			let profit;
+			if (!op.operationType) { // Buy Operation
+				profit = (op.leverage * investment * ((actualPrice / openPrice ) - 1)).toFixed(2); 
+			}
+			else{ // Sell operation
+				profit = (op.leverage * investment * (openPrice  - actualPrice) / openPrice).toFixed(2);
+			}
+
+			// console.log("Op Type: ", op.operationType);
+			// console.log("Op Type true: ", op.operationType === true);
+			// console.log("Op Type false: ", op.operationType === false);
 			
 			return {
-				stock: op.tickerSymbol, // Direct mapping from tickerSymbol to stock
+				stock: symbol, 
 				investment: investment,
-				opType: op.operationType ? "Sell" : "Buy",
+				opType: op.operationType,
 				openPrice: openPrice,
-				actualPrice: actualPrice,
-				earning: earning,
-				open_date: op.openDate.replaceAll("-", " - "), 
-				closed_date: op.closeDate == "" ?  "-" : op.closeDate.replaceAll("-", " - "), 
-				leverage: "X " + op.leverage
+				actualPrice: actualPrice.toFixed(2),
+				earning: profit,
+				open_date: op.openDate, 
+				closed_date: op.closeDate, 
+				leverage: op.leverage
 			};
 			
 		});
@@ -279,6 +354,10 @@ export default function UserReports() {
 	}, [MinMaxEarnings]); 
 
 
+	// Date testing
+	const now = new Date();
+   const currentDate = now.toISOString();
+   console.log(currentDate);
 
 
 	return (
@@ -334,6 +413,8 @@ export default function UserReports() {
 					value='2935'
 				/>
 			</SimpleGrid>
+
+			< CloseOperation operationId={0} />
 
 			{/* <SimpleGrid columns={{ base: 1, md: 2, xl: 2 }} gap='20px' mb='20px'>
 				<TotalSpent />
