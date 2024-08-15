@@ -4,8 +4,8 @@ const { DateTime } = require('luxon');
 
 let STOCK_API_KEY; // Api key for stock price service
 const stockApiKeyFile = '/home/northsoldier/Documents/Hackathons/Varathon - StockEx/nodejs_server/real-time-stocks-fetching-service/stockApiKey.txt';
-const allSupportedStocksFile = '/home/northsoldier/Documents/Hackathons/Varathon - StockEx/DataBase/SupportedSymbols/allStocks.txt';
-const savedStockPricesFile = '/home/northsoldier/Documents/Hackathons/Varathon - StockEx/DataBase/RealTimeStockPrices/savedStocksPrices.json';
+const allSupportedStocksFile = '/home/northsoldier/Documents/Hackathons/Varathon - StockEx/StockEx-Chakra-UI-Vite/public/DataBase/SupportedSymbols/allStocks.txt';
+const savedStockPricesFile = '/home/northsoldier/Documents/Hackathons/Varathon - StockEx/StockEx-Chakra-UI-Vite/public/DataBase/RealTimeStockPrices/savedStocksPrices.json';
 
 let allSupportedStocks = [] // A list with all currencies that are supported for the api call
 

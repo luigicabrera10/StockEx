@@ -2,9 +2,9 @@ const axios = require('axios');
 const fs = require('fs').promises;
 const { DateTime } = require('luxon');
 
-const allSupportedCurrenciesFile = '/home/northsoldier/Documents/Hackathons/Varathon - StockEx/DataBase/SupportedSymbols/allCurrencies.txt';
-const allSupportedCryptoFile = '/home/northsoldier/Documents/Hackathons/Varathon - StockEx/DataBase/SupportedSymbols/allCrypto.txt';
-const savedExchangeRatesFile = '/home/northsoldier/Documents/Hackathons/Varathon - StockEx/DataBase/Currencys/savedExchangeRates.json';
+const allSupportedCurrenciesFile = '/home/northsoldier/Documents/Hackathons/Varathon - StockEx/StockEx-Chakra-UI-Vite/public/DataBase/SupportedSymbols/allCurrencies.txt';
+const allSupportedCryptoFile = '/home/northsoldier/Documents/Hackathons/Varathon - StockEx/StockEx-Chakra-UI-Vite/public/DataBase/SupportedSymbols/allCrypto.txt';
+const savedExchangeRatesFile = '/home/northsoldier/Documents/Hackathons/Varathon - StockEx/StockEx-Chakra-UI-Vite/public/DataBase/Currencys/savedExchangeRates.json';
 const currencyApiKeyFile = '/home/northsoldier/Documents/Hackathons/Varathon - StockEx/nodejs_server/currency-fetching-service/currencyApiKey.txt';
 const cryptoApiKeyFile = '/home/northsoldier/Documents/Hackathons/Varathon - StockEx/nodejs_server/currency-fetching-service/cryptoApiKey.txt';
 
@@ -142,7 +142,7 @@ async function updateExchangeRates(currencies) {
 
         if (requestCrypto.length > 0){
 
-            const batchSize = 300;
+            const batchSize = 500;
 
             for (let i = 0; i < requestCrypto.length; i += batchSize) {
                 const batch = requestCrypto.slice(i, i + batchSize);
@@ -153,10 +153,15 @@ async function updateExchangeRates(currencies) {
 
                 const updatedTime = new Date(response.status.timestamp).toISOString();
                 Object.keys(response.data).forEach(symbol => {
-                    exchangeUpdates[symbol] = {
-                        'lastRefresh': updatedTime,
-                        'price': 1 / response.data[symbol].quote.USD.price
-                    };
+                    if (response.data[symbol].quote.USD.price !== null && response.data[symbol].quote.USD.price != 0){
+                        exchangeUpdates[symbol] = {
+                            'lastRefresh': updatedTime,
+                            'price': 1 / response.data[symbol].quote.USD.price
+                        };
+                    }
+                    else{
+                        console.log('Api response for', symbol, ": ", response.data[symbol].quote.USD.price);
+                    }
                 });
 
                 await saveExchangeRates();

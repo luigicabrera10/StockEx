@@ -40,10 +40,10 @@ let HISTORICAL_API_KEY;
 let allSupportedHistoricalStocks = ['TSLA', 'MSFT', 'IBM'];
 let nextUpdate = new Date().getTime();
 
-const allSupportedHistoricalStocksFile = '/home/northsoldier/Documents/Hackathons/Varathon - StockEx/DataBase/SupportedSymbols/allStocks.txt';
+const allSupportedHistoricalStocksFile = '/home/northsoldier/Documents/Hackathons/Varathon - StockEx/StockEx-Chakra-UI-Vite/public/DataBase/SupportedSymbols/allStocks.txt';
 const historicalStockApiKeyFile = '/home/northsoldier/Documents/Hackathons/Varathon - StockEx/nodejs_server/historical-stocks-fetching-service/historicalStockApiKeyTwelveData.txt';
 const savedHistoricalStockPricesFile = '/home/northsoldier/Documents/Hackathons/Varathon - StockEx/nodejs_server/historical-stocks-fetching-service/savedHistoricalStocksPrices.json';
-const savedHistoricalStockPricesFolder = '/home/northsoldier/Documents/Hackathons/Varathon - StockEx/DataBase/HistoricalStockPrices';
+const savedHistoricalStockPricesFolder = '/home/northsoldier/Documents/Hackathons/Varathon - StockEx/StockEx-Chakra-UI-Vite/public/DataBase/HistoricalStockPrices';
 
 const updateRateHistoricalStocks = 24 * 60 * 60 * 1000;
 
