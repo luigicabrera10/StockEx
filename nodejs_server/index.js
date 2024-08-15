@@ -128,6 +128,10 @@ async function parseAndSendCurrencys(currencys_symbols){
 
     for (let i = 0; i < currencys_symbols.length; ++i){
 
+        if (currency_prices[i] === null) {
+            continue;
+        }
+
         let price = Math.round(currency_prices[i] * decimal_const);
 
         // Convert to string if price exceeds safe integer limit
@@ -240,8 +244,8 @@ async function parseAndSendRealTimeStockPrices(stocks_symbols){
 async function updateRealTimeStocks(){
 
     const supportedStocks = await loadAllSupportedStocks();
-    // const updateStockTimeRate = 5 * 60 * 1000; // 5 minutes in milliseconds
-    const updateStockTimeRate = 30 * 60 * 1000; // 30 minutes in milliseconds (FOR TESTING)
+    const updateStockTimeRate = 3 * 60 * 1000; // 3 minutes in milliseconds
+    // const updateStockTimeRate = 30 * 60 * 1000; // 30 minutes in milliseconds (FOR TESTING)
 
     while (true) {
 

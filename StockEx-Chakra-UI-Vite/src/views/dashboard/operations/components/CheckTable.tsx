@@ -1,5 +1,7 @@
 import { Flex, Box, Table, Checkbox, Tbody, Td, Text, Th, Thead, Tr, useColorModeValue } from '@chakra-ui/react';
 import * as React from 'react';
+import { CloseOperation } from '@/smartContractComunication/send/CloseOperation';
+
 
 import {
 	createColumnHelper,
@@ -20,10 +22,11 @@ type RowObj = {
 	opType: number;
 	openPrice: number;
 	actualPrice: number;
-	earning: number;
+	earning: [string, string];
 	leverage: number;
 	open_date: string;
 	closed_date: string;
+	operationId: [boolean, number];
 };
  
 const columnHelper = createColumnHelper<RowObj>();
@@ -54,7 +57,7 @@ export default function CheckTable(props: { tableData: any }) {
 				// 		{info.getValue()}
 				// 	</Text>
 				// </Flex>
-				<Text color={textColor} fontSize='sm' fontWeight='700'>
+				<Text color={textColor} fontSize='18px' fontWeight='700'>
 					{info.getValue()}
 				</Text>
 			)
@@ -71,7 +74,7 @@ export default function CheckTable(props: { tableData: any }) {
 				</Text>
 			),
 			cell: (info) => (
-				<Text color={textColor} fontSize='sm' fontWeight='700'>
+				<Text color={textColor} fontSize='16px' fontWeight='700'>
 					{info.getValue()}
 				</Text>
 				// <Text color={textColor} fontSize="sm" fontWeight="700" textAlign="center">
@@ -91,7 +94,7 @@ export default function CheckTable(props: { tableData: any }) {
 				</Text>
 			),
 			cell: (info) => (
-				<Text color={textColor} fontSize='sm' fontWeight='700'>
+				<Text color={textColor} fontSize='16px' fontWeight='700' textAlign="center">
 					{info.getValue()}
 				</Text>
 			)
@@ -108,7 +111,7 @@ export default function CheckTable(props: { tableData: any }) {
 				</Text>
 			),
 			cell: (info) => (
-				<Text color={textColor} fontSize='sm' fontWeight='700'>
+				<Text color={textColor} fontSize='16px' fontWeight='700' textAlign="center">
 					{info.getValue()}
 				</Text>
 			)
@@ -125,7 +128,7 @@ export default function CheckTable(props: { tableData: any }) {
 				</Text>
 			),
 			cell: (info) => (
-				<Text color={textColor} fontSize='sm' fontWeight='700'>
+				<Text color={textColor} fontSize='16px' fontWeight='700' textAlign="center">
 					{info.getValue()}
 				</Text>
 			)
@@ -142,8 +145,8 @@ export default function CheckTable(props: { tableData: any }) {
 				</Text>
 			),
 			cell: (info) => (
-				<Text color={textColor} fontSize='sm' fontWeight='700'>
-					{info.getValue()}
+				<Text color={textColor} fontSize='16px' fontWeight='700' textColor={info.getValue()[1]} >
+					{info.getValue()[0]}
 				</Text>
 			)
 		}),
@@ -159,7 +162,7 @@ export default function CheckTable(props: { tableData: any }) {
 				</Text>
 			),
 			cell: (info) => (
-				<Text color={textColor} fontSize='sm' fontWeight='700'>
+				<Text color={textColor} fontSize='16px' fontWeight='700'  textAlign="center">
 					{info.getValue()}
 				</Text>
 			)
@@ -176,120 +179,59 @@ export default function CheckTable(props: { tableData: any }) {
 				</Text>
 			),
 			cell: (info) => (
-				<Text color={textColor} fontSize='sm' fontWeight='700'>
+				<Text color={textColor} fontSize='16px' fontWeight='700'  textAlign="center">
 					{info.getValue()}
 				</Text>
 			)
 		}),
-		columnHelper.accessor('closed_date', {
-			id: 'closed_date',
+		// columnHelper.accessor('closed_date', {
+		// 	id: 'closed_date',
+		// 	header: () => (
+		// 		<Text
+		// 			justifyContent='space-between'
+		// 			align='center'
+		// 			fontSize={{ sm: '10px', lg: '12px' }}
+		// 			color='gray.400'>
+		// 			CLOSE DATE
+		// 		</Text>
+		// 	),
+		// 	cell: (info) => (
+		// 		<Text color={textColor} fontSize='16px' fontWeight='700' textAlign="center">
+		// 			{info.getValue()}
+		// 		</Text>
+		// 	)
+		// }),
+		columnHelper.accessor('operationId', {
+			id: 'operationId',
 			header: () => (
 				<Text
 					justifyContent='space-between'
 					align='center'
-					fontSize={{ sm: '10px', lg: '12px' }}
+					fontSize='16px'
 					color='gray.400'>
-					CLOSE DATE
+					STATE
 				</Text>
 			),
 			cell: (info) => (
-				<Text color={textColor} fontSize='sm' fontWeight='700'>
-					{info.getValue()}
-				</Text>
-			)
-		}),
-		columnHelper.accessor('close_operation', {
-			id: 'close_operation',
-			header: () => (
-				<Text
-					justifyContent='space-between'
-					align='center'
-					fontSize={{ sm: '10px', lg: '12px' }}
-					color='gray.400'>
-					CLOSE OPERATION
-				</Text>
-			),
-			cell: (info) => (
-				<Text color={textColor} fontSize='sm' fontWeight='700'>
-					{info.getValue()}
-				</Text>
+
+				info.getValue()[0] ? (
+					<Box my='5px'>
+						< CloseOperation operationId={info.getValue()[1]} />
+					</Box>
+
+				) : (
+					<Box my='13px'>
+						<Text color={textColor} fontSize='16px' fontWeight='700' textAlign="center">
+							Closed
+						</Text>
+					</Box>
+				)
+			
 			)
 		})
 	];
 	const [ data, setData ] = React.useState(() => [ ...defaultData ]);
 	
-	// const table = useReactTable({
-	// 	data,
-	// 	columns,
-	// 	state: {
-	// 		sorting
-	// 	},
-	// 	onSortingChange: setSorting,
-	// 	getCoreRowModel: getCoreRowModel(),
-	// 	getSortedRowModel: getSortedRowModel(),
-	// 	debugTable: true
-	// });
-	// return (
-	// 	<Card flexDirection='column' w='100%' px='0px' overflowX={{ sm: 'scroll', lg: 'hidden' }}>
-	// 		<Flex px='25px' mb="8px" justifyContent='space-between' align='center'>
-	// 			<Text color={textColor} fontSize='22px' fontWeight='700' lineHeight='100%'>
-	// 				Check Table
-	// 			</Text>
-	// 			<Menu />
-	// 		</Flex>
-	// 		<Box>
-	// 			<Table variant='simple' color='gray.500' mb='24px' mt="12px">
-	// 				<Thead>
-	// 					{table.getHeaderGroups().map((headerGroup) => (
-	// 						<Tr key={headerGroup.id}>
-	// 							{headerGroup.headers.map((header) => {
-	// 								return (
-	// 									<Th
-	// 										key={header.id}
-	// 										colSpan={header.colSpan}
-	// 										pe='10px' 
-	// 										borderColor={borderColor}
-	// 										cursor='pointer'
-	// 										onClick={header.column.getToggleSortingHandler()}>
-	// 										<Flex
-	// 											justifyContent='space-between'
-	// 											align='center'
-	// 											fontSize={{ sm: '10px', lg: '12px' }}
-	// 											color='gray.400'>
-	// 											{flexRender(header.column.columnDef.header, header.getContext())}{{
-	// 												asc: '',
-	// 												desc: '',
-	// 											}[header.column.getIsSorted() as string] ?? null}
-	// 										</Flex>
-	// 									</Th>
-	// 								);
-	// 							})}
-	// 						</Tr>
-	// 					))}
-	// 				</Thead>
-	// 				<Tbody>
-	// 					{table.getRowModel().rows.slice(0, 5).map((row) => {
-	// 						return (
-	// 							<Tr key={row.id}>
-	// 								{row.getVisibleCells().map((cell) => {
-	// 									return (
-	// 										<Td
-	// 											key={cell.id}
-	// 											fontSize={{ sm: '14px' }}
-	// 											minW={{ sm: '150px', md: '200px', lg: 'auto' }}
-	// 											borderColor='transparent'>
-	// 											{flexRender(cell.column.columnDef.cell, cell.getContext())}
-	// 										</Td>
-	// 									);
-	// 								})}
-	// 							</Tr>
-	// 						);
-	// 					})}
-	// 				</Tbody>
-	// 			</Table>
-	// 		</Box>
-	// 	</Card>
-	// );
 
 	const table = useReactTable({
 		data: tableData,

@@ -52,6 +52,8 @@ import React, { useState, useEffect } from 'react';
 import { web3Enable, web3Accounts } from '@polkadot/extension-dapp';
 
 import {getHexAdress} from '../../../utils/getHexAdress';
+import { useApi, useAccount, useBalance, useBalanceFormat } from '@gear-js/react-hooks';
+
 
 
 const useRealTimeStockPrices = () => {
@@ -92,7 +94,7 @@ export default function UserReports() {
 
 	// For connecting polkadot wallet:
 	const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
-	const [account, setAccount] = useState<string | null>(null);
+	// const [account, setAccount] = useState<string | null>(null);
 	const [OperationStateValue, setOperationStateValue] = useState('all');
 	const [OperationTypeValue, setOperationTypeValue] = useState('all');
 	const [StockValue, setStockValue] = useState('any');
@@ -104,17 +106,24 @@ export default function UserReports() {
 	const [EarningsRange, setEarningsRange] = useState([0, 10000]);
 	const [MinMaxEarnings, setMinMaxEarnings] = useState([0, 10000]);
 
-
-
 	// fetch Prices:
-	// const [prices, setPrices] = useState(null);
-	// const [loading, setLoading] = useState(true);
-
 	const { prices, loading, error } = useRealTimeStockPrices();
 
+	// mini statics:
+	const [ActiveOp, setActiveOp] = useState(0);
+	const [ClosedOp, setClosedOp] = useState(0);
+	const [Earnings, setEarnings] = useState('$0');
+	const [Invested, setInvested] = useState('$0');
 
+	// Vara Balance
+	const { account, accounts } = useAccount();
+	const { balance } = useBalance(account?.address);
+	const { getFormattedBalance } = useBalanceFormat();
+
+	const formattedBalance = balance ? getFormattedBalance(balance) : {value: '0.00', unit: 'TVARA'};
+	const finalBalance = parseFloat(formattedBalance.value).toFixed(2) + ' ' + formattedBalance.unit;
+	console.log("BALANCE: ", finalBalance)
 	
-
 
 	// Wallet
 	useEffect(() => {
@@ -131,7 +140,7 @@ export default function UserReports() {
 				}
 				const accounts = await web3Accounts();
 				if (accounts.length > 0) {
-					setAccount(accounts[0].address);
+					// setAccount(accounts[0].address);
 					setIsLoggedIn(true);
 					// console.log('Logged in');
 				}
@@ -147,17 +156,6 @@ export default function UserReports() {
 	// Change the account
 	let accountHexa: string = getHexAdress();
 
-
-	// useEffect(() => {
-	// 	if (loading){
-	// 		const getPrices = async () => {
-	// 			const pricesFetched = await fetchRealTimeStockPrices();
-	// 			setPrices(pricesFetched);
-	// 			setLoading(false);
-	// 		};
-	// 		getPrices();
-	// 	}
-	// }, []);
 
 
 	// Handle filters:
@@ -199,7 +197,7 @@ export default function UserReports() {
 		if (num === 0) return 0;
 	 
 		const absNum = Math.abs(num);
-		const magnitude = Math.pow(10, Math.floor(Math.log10(absNum)));
+		const magnitude = Math.pow(10, Math.max(Math.floor(Math.log10(absNum)), 1) );
 	 
 		let roundedNum = Math.ceil(absNum / magnitude) * magnitude;
 	 
@@ -300,11 +298,12 @@ export default function UserReports() {
 				investment: investment,
 				opType: op.operationType,
 				openPrice: openPrice,
-				actualPrice: actualPrice.toFixed(2),
+				actualPrice: parseFloat(actualPrice).toFixed(2),
 				earning: profit,
 				open_date: op.openDate, 
 				closed_date: op.closeDate, 
-				leverage: op.leverage
+				leverage: op.leverage,
+				operationId: op.id
 			};
 			
 		});
@@ -314,8 +313,6 @@ export default function UserReports() {
 
 
 	// SET RANGES
-
-	
 
 	// Use useEffect to update MinMaxInvestment based on your data
 	useEffect(() => {
@@ -354,6 +351,33 @@ export default function UserReports() {
 	}, [MinMaxEarnings]); 
 
 
+	// SET Mini Statics:
+
+	useEffect(() => {
+
+		let closedOp: number = 0;
+		let activeOp: number = 0;
+		let earnings: number = 0;
+		let invested: number = 0;
+		
+		finalOperations.forEach((op) => {
+			if (op.closed_date !== '') {
+				closedOp = closedOp + 1;
+			}
+			else{
+				activeOp = activeOp + 1;
+				invested = invested + parseFloat(op.investment);
+			}
+			earnings = earnings + parseFloat(op.earning);
+		})
+
+		setActiveOp(activeOp);
+		setClosedOp(closedOp);
+		setEarnings('$ '+ earnings.toFixed(2).toString());
+		setInvested('$ '+ invested.toFixed(2).toString());
+
+	}, [finalOperations]); // Every time finalOperations changes
+
 	// Date testing
 	const now = new Date();
    const currentDate = now.toISOString();
@@ -372,8 +396,9 @@ export default function UserReports() {
 							icon={<Icon w='32px' h='32px' as={MdBarChart} color={brandColor} />}
 						/>
 					}
-					name='Vara Capital'
-					value='$350.4'
+					name='Capital'
+					growth='$ 15.265' 
+					value={finalBalance}
 				/>
 				<MiniStatistics
 					startContent={
@@ -384,10 +409,23 @@ export default function UserReports() {
 							icon={<Icon w='32px' h='32px' as={MdAttachMoney} color={brandColor} />}
 						/>
 					}
+					growth='+23%' 
 					name='Invested'
-					value='$642.39'
+					value={Invested}
 				/>
-				<MiniStatistics growth='+23%' name='Earnings' value='$574.34' />
+				<MiniStatistics 
+					startContent={
+						<IconBox
+							w='56px'
+							h='56px'
+							bg={boxBg}
+							icon={<Icon w='32px' h='32px' as={MdAttachMoney} color={brandColor} />}
+						/>
+					} 
+					growth='+ 23%' 
+					name='Earnings' 
+					value={Earnings} 
+				/>
 				<MiniStatistics
 					startContent={
 						<IconBox
@@ -398,7 +436,7 @@ export default function UserReports() {
 						/>
 					}
 					name='Active Operations'
-					value='154'
+					value={ActiveOp}
 				/>
 				<MiniStatistics
 					startContent={
@@ -410,11 +448,11 @@ export default function UserReports() {
 						/>
 					}
 					name='Closed Operations'
-					value='2935'
+					value={ClosedOp}
 				/>
 			</SimpleGrid>
 
-			< CloseOperation operationId={0} />
+			{/* < CloseOperation operationId={0} /> */}
 
 			{/* <SimpleGrid columns={{ base: 1, md: 2, xl: 2 }} gap='20px' mb='20px'>
 				<TotalSpent />
@@ -423,7 +461,7 @@ export default function UserReports() {
 			<Grid
 				templateColumns={{
 					base: '1fr',
-					lg: '4.2fr 1fr'
+					lg: '4.4fr 1fr'
 				}}
 				templateRows={{
 					base: 'repeat(3, 1fr)',
@@ -440,7 +478,7 @@ export default function UserReports() {
 					earnings={EarningsRange}
 					leverage={LeverageRange}/>
 				
-				<SimpleGrid columns={{ base: 1, md: 1, xl: 1 }} gap='20px' mb='20px'>
+				<SimpleGrid columns={{ base: 1, md: 1, xl: 1 }} gap='20px' mb='20px' alignContent='start'>
 
 					<Box margin='0px'>
 					</Box>
@@ -477,7 +515,7 @@ export default function UserReports() {
 							defaultValue={MinMaxInvestment}
 							min={MinMaxInvestment[0]}
 							max={MinMaxInvestment[1]}
-							step={10}
+							step={1}
 							onChange={handleRangeChange(setInvestmentRange)}
 						>
 							<RangeSliderTrack>
@@ -490,12 +528,12 @@ export default function UserReports() {
 					</Box>
 
 					<Box>
-							<FormLabel fontWeight="bold" fontSize='20px'>Earnings</FormLabel>
+							<FormLabel fontWeight="bold" fontSize='20px'>Profit</FormLabel>
 							<RangeSlider
 								defaultValue={MinMaxEarnings}
 								min={MinMaxEarnings[0]}
 								max={MinMaxEarnings[1]}
-								step={10}
+								step={1}
 								onChange={handleRangeChange(setEarningsRange)}
 							>
 								<RangeSliderTrack>

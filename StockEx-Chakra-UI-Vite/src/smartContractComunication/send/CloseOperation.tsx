@@ -3,6 +3,7 @@ import { useAccount, useApi, useAlert } from "@gear-js/react-hooks";
 import { web3FromSource } from "@polkadot/extension-dapp";
 import { ProgramMetadata } from "@gear-js/api";
 import { Button } from "@gear-js/ui";
+import { Flex } from "@chakra-ui/react";
 
 function CloseOperation({ operationId }) {
 
@@ -64,7 +65,9 @@ function CloseOperation({ operationId }) {
       }
    };
 
-   return <Button text="Close Operation" onClick={signer} />;
+   return <Flex align='center' justifyContent='center'> 
+         <Button text="Close Now" onClick={signer} color='light'/> 
+      </Flex>;
 }
 
 export { CloseOperation };

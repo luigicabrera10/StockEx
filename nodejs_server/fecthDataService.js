@@ -71,7 +71,7 @@ async function fetchCurrencyPrices(currencys){
       return null;
    }
 
-   await updateExchangeRates(currencys);
+   // await updateExchangeRates(currencys);
 
    let prices = [];
 
@@ -115,7 +115,7 @@ async function fetchStockPrices(symbolsAndCurrencies){
    if (!validRequest) return null;
 
    // Check if currencys need an update
-   await updateExchangeRates(request_currencys);
+   // await updateExchangeRates(request_currencys);
 
    try {
       const stockDataPromises = symbolsAndCurrencies.map(async ([symbol, currency]) => await getStockPrice(symbol) * await currencyExchange("USD", currency));

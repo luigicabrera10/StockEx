@@ -32,8 +32,8 @@ export default function OperationTable(props: {
    if (opState === 'active') tableData = tableData.filter(operation => operation.closed_date === "");
    else if (opState === 'closed') tableData = tableData.filter(operation => operation.closed_date !== "");
 
-   if (opType === 'buy') tableData = tableData.filter(operation => operation.opType == true);
-   else if (opType === 'sell') tableData = tableData.filter(operation => operation.opType == false);
+   if (opType === 'buy') tableData = tableData.filter(operation => operation.opType !== true);
+   else if (opType === 'sell') tableData = tableData.filter(operation => operation.opType !== false);
    
    if (stock !== 'any'){
       tableData = tableData.filter(operation => operation.stock === stock);
@@ -54,12 +54,15 @@ export default function OperationTable(props: {
          opType: op.opType ? "Sell" : "Buy",
          openPrice: "$ " + op.openPrice,
          actualPrice: "$ " + op.actualPrice,
-         earning: op.earning >= 0 ? "+ $ " + Math.abs(op.earning) : "- $ " + Math.abs(op.earning),
+         earning: op.earning >= 0 ? ["+ $ " + Math.abs(op.earning), '#1aba1a'] : ["- $ " + Math.abs(op.earning),'#d62b2b'],
          open_date: formatDate(op.open_date), 
          closed_date: op.closed_date == "" ? " - " : formatDate(op.closed_date), 
-         leverage: "X " + op.leverage
+         leverage: "X " + op.leverage,
+         operationId: [op.closed_date === "", op.operationId]
       }
    })
+
+   tableData = tableData.reverse();
    
    console.log("Table Data after: ", tableData);
 
