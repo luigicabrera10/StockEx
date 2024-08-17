@@ -45,7 +45,7 @@ export default function CheckTable(props: { tableData: any }) {
 				<Text
 					justifyContent='space-between'
 					align='center'
-					fontSize={{ sm: '10px', lg: '12px' }}
+					fontSize='16px'
 					color='gray.400'>
 					STOCK
 				</Text>
@@ -68,13 +68,13 @@ export default function CheckTable(props: { tableData: any }) {
 				<Text
 					justifyContent='space-between'
 					align='center'
-					fontSize={{ sm: '10px', lg: '12px' }}
+					fontSize='16px'
 					color='gray.400'>
 					INVEST
 				</Text>
 			),
 			cell: (info) => (
-				<Text color={textColor} fontSize='16px' fontWeight='700'>
+				<Text color={textColor} fontSize='18px' fontWeight='700'>
 					{info.getValue()}
 				</Text>
 				// <Text color={textColor} fontSize="sm" fontWeight="700" textAlign="center">
@@ -88,13 +88,13 @@ export default function CheckTable(props: { tableData: any }) {
 				<Text
 					justifyContent='space-between'
 					align='center'
-					fontSize={{ sm: '10px', lg: '12px' }}
+					fontSize='16px'
 					color='gray.400'>
 					TYPE
 				</Text>
 			),
 			cell: (info) => (
-				<Text color={textColor} fontSize='16px' fontWeight='700' textAlign="center">
+				<Text color={textColor} fontSize='18px' fontWeight='700' textAlign="center">
 					{info.getValue()}
 				</Text>
 			)
@@ -105,13 +105,13 @@ export default function CheckTable(props: { tableData: any }) {
 				<Text
 					justifyContent='space-between'
 					align='center'
-					fontSize={{ sm: '10px', lg: '12px' }}
+					fontSize='16px'
 					color='gray.400'>
 					OPEN PRICE
 				</Text>
 			),
 			cell: (info) => (
-				<Text color={textColor} fontSize='16px' fontWeight='700' textAlign="center">
+				<Text color={textColor} fontSize='18px' fontWeight='700' textAlign="center">
 					{info.getValue()}
 				</Text>
 			)
@@ -122,13 +122,13 @@ export default function CheckTable(props: { tableData: any }) {
 				<Text
 					justifyContent='space-between'
 					align='center'
-					fontSize={{ sm: '10px', lg: '12px' }}
+					fontSize='16px'
 					color='gray.400'>
 					CURRENT PRICE
 				</Text>
 			),
 			cell: (info) => (
-				<Text color={textColor} fontSize='16px' fontWeight='700' textAlign="center">
+				<Text color={textColor} fontSize='18px' fontWeight='700' textAlign="center">
 					{info.getValue()}
 				</Text>
 			)
@@ -139,13 +139,13 @@ export default function CheckTable(props: { tableData: any }) {
 				<Text
 					justifyContent='space-between'
 					align='center'
-					fontSize={{ sm: '10px', lg: '12px' }}
+					fontSize='16px'
 					color='gray.400'>
 					PROFIT
 				</Text>
 			),
 			cell: (info) => (
-				<Text color={textColor} fontSize='16px' fontWeight='700' textColor={info.getValue()[1]} >
+				<Text color={textColor} fontSize='18px' fontWeight='700' textColor={info.getValue()[1]} >
 					{info.getValue()[0]}
 				</Text>
 			)
@@ -156,13 +156,13 @@ export default function CheckTable(props: { tableData: any }) {
 				<Text
 					justifyContent='space-between'
 					align='center'
-					fontSize={{ sm: '10px', lg: '12px' }}
+					fontSize='16px'
 					color='gray.400'>
 					LEV
 				</Text>
 			),
 			cell: (info) => (
-				<Text color={textColor} fontSize='16px' fontWeight='700'  textAlign="center">
+				<Text color={textColor} fontSize='18px' fontWeight='700'  textAlign="center">
 					{info.getValue()}
 				</Text>
 			)
@@ -173,13 +173,13 @@ export default function CheckTable(props: { tableData: any }) {
 				<Text
 					justifyContent='space-between'
 					align='center'
-					fontSize={{ sm: '10px', lg: '12px' }}
+					fontSize='16px'
 					color='gray.400'>
 					OPEN DATE
 				</Text>
 			),
 			cell: (info) => (
-				<Text color={textColor} fontSize='16px' fontWeight='700'  textAlign="center">
+				<Text color={textColor} fontSize='18px' fontWeight='700'  textAlign="center">
 					{info.getValue()}
 				</Text>
 			)
@@ -221,7 +221,7 @@ export default function CheckTable(props: { tableData: any }) {
 
 				) : (
 					<Box my='13px'>
-						<Text color={textColor} fontSize='16px' fontWeight='700' textAlign="center">
+						<Text color={textColor} fontSize='18px	' fontWeight='700' textAlign="center">
 							Closed
 						</Text>
 					</Box>

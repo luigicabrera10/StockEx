@@ -6,7 +6,7 @@ import MainDashboard from './views/dashboard/default';
 import NFTMarketplace from './views/dashboard/marketplace';
 import Profile from './views/dashboard/profile';
 import DataTables from './views/dashboard/dataTables';
-import Operations from './views/dashboard/operations';
+import Portfolio from './views/dashboard/portfolio';
 
 import RTL from './views/dashboard/rtl';
 
@@ -51,11 +51,11 @@ const routes = [
 		component: SignInCentered,
 	},
 	{
-		name: 'Operations',
+		name: 'Portfolio',
 		layout: '/dashboard',
-		path: '/operations',
-		icon: <Icon as={MdHome} width='20px' height='20px' color='inherit' />,
-		component: Operations,
+		path: '/portfolio',
+		icon: <Icon as={MdBarChart} width='20px' height='20px' color='inherit' />,
+		component: Portfolio,
 	},
 
 ];

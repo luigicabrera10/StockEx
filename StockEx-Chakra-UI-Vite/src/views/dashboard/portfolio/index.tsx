@@ -26,11 +26,13 @@ import { Avatar, Box, Grid, Flex, FormLabel, Icon, Select, SimpleGrid, useColorM
 import Usa from '../../../assets/images/dashboards/usa.png';
 // Custom components
 import MiniCalendar from '../../../components/calendar/MiniCalendar';
-import MiniStatistics from '../../../components/card/MiniStatistics';
+import PortfolioStatistics from './components/PortfolioStatistics';
 import IconBox from '../../../components/icons/IconBox';
 import { MdAddTask, MdAttachMoney, MdBarChart, MdFileCopy } from 'react-icons/md';
+import { GiProfit } from "react-icons/gi";
+import { FaChartLine } from "react-icons/fa6";
 import CheckTable from '../rtl/components/CheckTable';
-import OperationTable from '../operations/components/OperationsTable';
+import OperationTable from './components/OperationsTable';
 import ComplexTable from '../default/components/ComplexTable';
 import DailyTraffic from '../default/components/DailyTraffic';
 import PieCard from '../default/components/PieCard';
@@ -46,7 +48,7 @@ import { RangeSlider, RangeSliderTrack, RangeSliderFilledTrack, RangeSliderThumb
 import { AllOperations } from '@/smartContractComunication/read/AllOperations';
 import { CloseOperation } from '@/smartContractComunication/send/CloseOperation';
 import fetchRealTimeStockPrices from '@/dataFetching/fetchRealTimeStockPrices'
-
+import fetchCurrencyPrices from '@/dataFetching/fetchCurrencyPrices'
 
 import React, { useState, useEffect } from 'react';
 import { web3Enable, web3Accounts } from '@polkadot/extension-dapp';
@@ -57,9 +59,9 @@ import { useApi, useAccount, useBalance, useBalanceFormat } from '@gear-js/react
 
 
 const useRealTimeStockPrices = () => {
-   const [prices, setPrices] = useState<any | null>(null);
-   const [loading, setLoading] = useState<boolean>(true);
-   const [error, setError] = useState<string | null>(null);
+   const [stock_prices, setstock_Prices] = useState<any | null>(null);
+   const [stock_loading, setstock_Loading] = useState<boolean>(true);
+   const [stock_error, setError] = useState<string | null>(null);
 
    useEffect(() => {
       const getPrices = async () => {
@@ -68,20 +70,57 @@ const useRealTimeStockPrices = () => {
             if (pricesFetched === null) {
                setError('Failed to fetch stock prices');
             } else {
-               setPrices(pricesFetched);
+               setstock_Prices(pricesFetched);
             }
          } catch (error) {
             setError('An unexpected error occurred');
          } finally {
-            setLoading(false);
+            setstock_Loading(false);
          }
       };
 
       getPrices();
    }, []); // Empty dependency array means this effect runs once when the component mounts
 
-   return { prices, loading, error };
+   return { stock_prices, stock_loading, stock_error };
 };
+
+const useCurrencyPrices = () => {
+   const [CurrencyPrices, setCurrencyPrices] = useState<any | null>(null);
+   const [CurrencyLoading, setCurrencyLoading] = useState<boolean>(true);
+   const [CurrencyError, setCurrencyError] = useState<string | null>(null);
+
+   useEffect(() => {
+      const getPrices = async () => {
+         try {
+            const pricesFetched = await fetchCurrencyPrices();
+            if (pricesFetched === null) {
+               setCurrencyError('Failed to fetch stock prices');
+					console.log("FAILED FETCHING PRICES")
+            } else {
+               setCurrencyPrices(pricesFetched);
+					console.log("CURRENCY PRICES: ", pricesFetched)
+            }
+         } catch (error) {
+            setCurrencyError('An unexpected error occurred');
+         } finally {
+            setCurrencyLoading(false);
+         }
+      };
+
+      getPrices();
+   }, []); // Empty dependency array means this effect runs once when the component mounts
+
+   return { CurrencyPrices, CurrencyLoading, CurrencyError };
+};
+
+function exchange(currency1:string, currency2:string, value, prices) {
+	// console.log ("currency1: ", prices[currency1]);
+	// console.log ("currency2: ", prices[currency2]);
+	// console.log ("value: ", value);
+	return value * prices[currency2].price / prices[currency1].price;
+}
+
 
 
 export default function UserReports() {
@@ -107,22 +146,37 @@ export default function UserReports() {
 	const [MinMaxEarnings, setMinMaxEarnings] = useState([0, 10000]);
 
 	// fetch Prices:
-	const { prices, loading, error } = useRealTimeStockPrices();
+	const { stock_prices, stock_loading, stock_error } = useRealTimeStockPrices();
+	const { CurrencyPrices, CurrencyLoading, CurrencyError } = useCurrencyPrices();
+	const [SelectedCurrency, setSelectedCurrency] = useState('USD');
 
 	// mini statics:
 	const [ActiveOp, setActiveOp] = useState(0);
 	const [ClosedOp, setClosedOp] = useState(0);
-	const [Earnings, setEarnings] = useState('$0');
-	const [Invested, setInvested] = useState('$0');
+	const [Earnings, setEarnings] = useState('$ 0');
+	const [Invested, setInvested] = useState('$ 0');
+
+	const [EarningsPercent, setEarningsPercent] = useState(0.0);
+	const [InvestedPercent, setInvestedPercent] = useState(0.0);
+	const [FixedBalance, setFixedBalance] = useState(0.0);
+	const [OpenThisMonth, setOpenThisMonth] = useState(0);
+	const [ClosedThisMonth, setClosedThisMonth] = useState(0);
+
+	const [VaraEarnings, setVaraEarnings] = useState('0 TVARA');
+	const [VaraInvested, setVaraInvested] = useState('0 TVARA');
 
 	// Vara Balance
 	const { account, accounts } = useAccount();
 	const { balance } = useBalance(account?.address);
 	const { getFormattedBalance } = useBalanceFormat();
 
+	
 	const formattedBalance = balance ? getFormattedBalance(balance) : {value: '0.00', unit: 'TVARA'};
-	const finalBalance = parseFloat(formattedBalance.value).toFixed(2) + ' ' + formattedBalance.unit;
-	console.log("BALANCE: ", finalBalance)
+	const varaBalance = parseFloat(formattedBalance.value).toFixed(2) + ' ' + formattedBalance.unit;
+	const currencyBalance = !CurrencyLoading ? 
+	'$ ' + exchange('VARA', SelectedCurrency, parseFloat(formattedBalance.value).toFixed(2), CurrencyPrices).toFixed(2) : '$0.0' ;
+
+
 	
 
 	// Wallet
@@ -277,8 +331,8 @@ export default function UserReports() {
 
 			let actualPrice = openPrice; // Default to openPrice if data is not available
 
-			if (!loading && prices !== null) {
-				actualPrice = prices[symbol]["price"] || openPrice; // Fallback to openPrice if symbol not found
+			if (!stock_loading && stock_prices !== null) {
+				actualPrice = stock_prices[symbol]["price"] || openPrice; // Fallback to openPrice if symbol not found
 			}
 
 			let profit;
@@ -359,22 +413,70 @@ export default function UserReports() {
 		let activeOp: number = 0;
 		let earnings: number = 0;
 		let invested: number = 0;
-		
+
+		let closedMonth: number = 0;
+		let openMonth: number = 0;
+
+		// Get the current month and year
+		const currentMonth = new Date().getMonth();
+		const currentYear = new Date().getFullYear();
+
 		finalOperations.forEach((op) => {
 			if (op.closed_date !== '') {
 				closedOp = closedOp + 1;
+				
+				// Check if the operation was closed this month
+				const closeDate = new Date(op.closed_date);
+				if (closeDate && closeDate.getMonth() === currentMonth && closeDate.getFullYear() === currentYear) {
+					closedMonth += 1;
+				}
 			}
 			else{
 				activeOp = activeOp + 1;
 				invested = invested + parseFloat(op.investment);
 			}
 			earnings = earnings + parseFloat(op.earning);
+
+
+			// Parse the open and close dates
+			const openDate = new Date(op.open_date);
+			
+
+			// Check if the operation was opened this month
+			if (openDate.getMonth() === currentMonth && openDate.getFullYear() === currentYear) {
+				 openMonth += 1;
+			}
+	  
 		})
 
 		setActiveOp(activeOp);
 		setClosedOp(closedOp);
-		setEarnings('$ '+ earnings.toFixed(2).toString());
-		setInvested('$ '+ invested.toFixed(2).toString());
+
+		const finalEarnings = earnings.toFixed(2);
+		const finalInvested = invested.toFixed(2);
+
+		setEarnings(finalEarnings >= 0 ? '$ '+ finalEarnings : '- $ ' + finalEarnings*-1);
+		setInvested('$ '+ finalInvested);
+
+		const totalBalance = parseFloat(currencyBalance.substring(2)) + parseFloat(finalInvested);
+		if (!CurrencyLoading){
+			setInvestedPercent((100 * finalInvested / totalBalance).toFixed(2));
+		}
+		else{
+			setInvestedPercent(0.0);
+		}
+		setEarningsPercent((100 * finalEarnings / finalInvested).toFixed(2));
+
+		if (!CurrencyLoading){
+			setVaraEarnings(exchange(SelectedCurrency, 'VARA', finalEarnings, CurrencyPrices).toFixed(2) + ' TVARA');
+			setVaraInvested(exchange(SelectedCurrency, 'VARA', finalInvested, CurrencyPrices).toFixed(2) + ' TVARA');
+		}
+
+		setFixedBalance((totalBalance + parseFloat(finalEarnings)).toFixed(2));
+
+		setOpenThisMonth(openMonth);
+		setClosedThisMonth(closedMonth);
+		
 
 	}, [finalOperations]); // Every time finalOperations changes
 
@@ -387,68 +489,123 @@ export default function UserReports() {
 	return (
 		<Box pt={{ base: '130px', md: '80px', xl: '80px' }}>
 			<SimpleGrid columns={{ base: 1, md: 2, lg: 3, '2xl': 5 }} gap='20px' mb='20px'>
-				<MiniStatistics
+				<PortfolioStatistics
 					startContent={
 						<IconBox
 							w='56px'
 							h='56px'
 							bg={boxBg}
-							icon={<Icon w='32px' h='32px' as={MdBarChart} color={brandColor} />}
+							icon={<Icon w='32px' h='32px' as={MdAttachMoney} color={brandColor} />}
 						/>
 					}
 					name='Capital'
-					growth='$ 15.265' 
-					value={finalBalance}
+					// growth='$ 15.265' 
+					value={currencyBalance}
+					rightContent={varaBalance}
+					end = {
+						<Flex align='center'>
+							<Text fontSize='xs' fontWeight='700' me='5px'>
+								{'$ ' + FixedBalance}
+							</Text>
+							<Text color='secondaryGray.600' fontSize='xs' fontWeight='400'>
+								total balance
+							</Text>
+						</Flex>
+					}
 				/>
-				<MiniStatistics
+				<PortfolioStatistics
 					startContent={
 						<IconBox
 							w='56px'
 							h='56px'
 							bg={boxBg}
-							icon={<Icon w='32px' h='32px' as={MdAttachMoney} color={brandColor} />}
+							icon={<Icon w='32px' h='32px' as={FaChartLine} color={brandColor} />}
 						/>
 					}
-					growth='+23%' 
+					// growth='+23%' 
 					name='Invested'
 					value={Invested}
+					rightContent={VaraInvested}
+					end = {
+						<Flex align='center'>
+							<Text fontSize='xs' fontWeight='700' me='5px'>
+								{InvestedPercent+ '%'}
+							</Text>
+							<Text color='secondaryGray.600' fontSize='xs' fontWeight='400'>
+								of your capital
+							</Text>
+						</Flex>
+					}
 				/>
-				<MiniStatistics 
+				<PortfolioStatistics 
 					startContent={
 						<IconBox
 							w='56px'
 							h='56px'
 							bg={boxBg}
-							icon={<Icon w='32px' h='32px' as={MdAttachMoney} color={brandColor} />}
+							icon={<Icon w='32px' h='32px' as={GiProfit} color={brandColor} />}
 						/>
 					} 
-					growth='+ 23%' 
+					// growth='+ 23%' 
 					name='Earnings' 
 					value={Earnings} 
+					rightContent={VaraEarnings}
+					end = {
+						<Flex align='center'>
+							<Text color= {EarningsPercent >= 0.0 ? 'green.500' : 'red'}  fontSize='xs' fontWeight='700' me='5px'>
+								{EarningsPercent >= 0.0 ? '+'+EarningsPercent+'%' : EarningsPercent+'%'}
+							</Text>
+							<Text color='secondaryGray.600' fontSize='xs' fontWeight='400'>
+								profit from investments
+							</Text>
+						</Flex>
+					}
 				/>
-				<MiniStatistics
+				<PortfolioStatistics
 					startContent={
 						<IconBox
 							w='56px'
 							h='56px'
-							bg='linear-gradient(90deg, #4481EB 0%, #04BEFE 100%)'
-							icon={<Icon w='28px' h='28px' as={MdAddTask} color='white' />}
+							// bg='linear-gradient(90deg, #4481EB 0%, #04BEFE 100%)'
+							bg={boxBg}
+
+							icon={<Icon w='28px' h='28px' as={MdBarChart} color='white' />}
 						/>
 					}
-					name='Active Operations'
-					value={ActiveOp}
+					name='Active'
+					value={ActiveOp + ' operations'}
+					end = {
+						<Flex align='center'>
+							<Text fontSize='xs' fontWeight='700' me='5px'>
+								{OpenThisMonth}
+							</Text>
+							<Text color='secondaryGray.600' fontSize='xs' fontWeight='400'>
+								opened this month
+							</Text>
+						</Flex>
+					}
 				/>
-				<MiniStatistics
+				<PortfolioStatistics
 					startContent={
 						<IconBox
 							w='56px'
 							h='56px'
 							bg={boxBg}
-							icon={<Icon w='32px' h='32px' as={MdFileCopy} color={brandColor} />}
+							icon={<Icon w='32px' h='32px' as={MdAddTask} color={brandColor} />}
 						/>
 					}
-					name='Closed Operations'
-					value={ClosedOp}
+					name='Closed'
+					value={ClosedOp + ' operations'}
+					end = {
+						<Flex align='center'>
+							<Text fontSize='xs' fontWeight='700' me='5px'>
+								{ClosedThisMonth}
+							</Text>
+							<Text color='secondaryGray.600' fontSize='xs' fontWeight='400'>
+								closed this month
+							</Text>
+						</Flex>
+					}
 				/>
 			</SimpleGrid>
 
@@ -528,38 +685,38 @@ export default function UserReports() {
 					</Box>
 
 					<Box>
-							<FormLabel fontWeight="bold" fontSize='20px'>Profit</FormLabel>
-							<RangeSlider
-								defaultValue={MinMaxEarnings}
-								min={MinMaxEarnings[0]}
-								max={MinMaxEarnings[1]}
-								step={1}
-								onChange={handleRangeChange(setEarningsRange)}
-							>
-								<RangeSliderTrack>
-								<RangeSliderFilledTrack />
-								</RangeSliderTrack>
-								<RangeSliderThumb index={0} />
-								<RangeSliderThumb index={1} />
-							</RangeSlider>
-							<Text>Min: {EarningsRange[0]} - Max: {EarningsRange[1]}</Text>
+						<FormLabel fontWeight="bold" fontSize='20px'>Profit</FormLabel>
+						<RangeSlider
+							defaultValue={MinMaxEarnings}
+							min={MinMaxEarnings[0]}
+							max={MinMaxEarnings[1]}
+							step={1}
+							onChange={handleRangeChange(setEarningsRange)}
+						>
+							<RangeSliderTrack>
+							<RangeSliderFilledTrack />
+							</RangeSliderTrack>
+							<RangeSliderThumb index={0} />
+							<RangeSliderThumb index={1} />
+						</RangeSlider>
+						<Text>Min: {EarningsRange[0]} - Max: {EarningsRange[1]}</Text>
 					</Box>
 
 					<Box>
-							<FormLabel fontWeight="bold" fontSize='20px'>Leverage</FormLabel>
-							<RangeSlider
-								defaultValue={LeverageRange}
-								min={0}
-								max={100}
-								onChange={handleRangeChange(setLeverageRange)}
-							>
-								<RangeSliderTrack>
-								<RangeSliderFilledTrack />
-								</RangeSliderTrack>
-								<RangeSliderThumb index={0} />
-								<RangeSliderThumb index={1} />
-							</RangeSlider>
-							<Text>Min: {LeverageRange[0]} - Max: {LeverageRange[1]}</Text>
+						<FormLabel fontWeight="bold" fontSize='20px'>Leverage</FormLabel>
+						<RangeSlider
+							defaultValue={LeverageRange}
+							min={0}
+							max={100}
+							onChange={handleRangeChange(setLeverageRange)}
+						>
+							<RangeSliderTrack>
+							<RangeSliderFilledTrack />
+							</RangeSliderTrack>
+							<RangeSliderThumb index={0} />
+							<RangeSliderThumb index={1} />
+						</RangeSlider>
+						<Text>Min: {LeverageRange[0]} - Max: {LeverageRange[1]}</Text>
 					</Box>
 				
 				</SimpleGrid>

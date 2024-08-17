@@ -286,6 +286,17 @@ async function updateRealTimeStocks(){
         }
         else{
 
+            for (let stock of supportedStocks) {
+                state = await updateStockPrice(stock);
+                if (state === false) {
+                    console.log("API limit hit or update failed. Waiting for 60 seconds...");
+                    await wait(60000);
+                }
+                else{
+                    await wait(1100);
+                }
+            }
+
             // Send Data and wait
             await parseAndSendRealTimeStockPrices(supportedStocks);
 
