@@ -1,9 +1,11 @@
 // Chakra imports
-import { Flex, useColorModeValue } from '@chakra-ui/react';
+import { Flex, useColorModeValue, Box } from '@chakra-ui/react';
 
 // Custom components
 import { HorizonLogo } from '../../../components/icons/Icons';
 import { HSeparator } from '../../../components/separator/Separator';
+
+import StockExLogo from '/src/assets/images/StockEx_logo.png';
 
 export function SidebarBrand() {
 	//   Chakra color mode
@@ -11,7 +13,10 @@ export function SidebarBrand() {
 
 	return (
 		<Flex alignItems='center' flexDirection='column'>
-			<HorizonLogo h='26px' w='175px' my='32px' color={logoColor} />
+			{/* <HorizonLogo h='26px' w='175px' my='32px' color={logoColor} />*/}
+			<Box paddingY='5px' marginBottom='25px' marginRight='16px'>
+				<img src={StockExLogo} alt="StockEx Logo" style={{ width: 'auto', height: '115px' }}/>
+			</Box> 
 			<HSeparator mb='20px' />
 		</Flex>
 	);
