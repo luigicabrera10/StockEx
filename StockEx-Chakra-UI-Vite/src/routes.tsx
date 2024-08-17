@@ -7,6 +7,7 @@ import NFTMarketplace from './views/dashboard/marketplace';
 import Profile from './views/dashboard/profile';
 import DataTables from './views/dashboard/dataTables';
 import Portfolio from './views/dashboard/portfolio';
+import Market from './views/dashboard/market';
 
 import RTL from './views/dashboard/rtl';
 
@@ -56,6 +57,13 @@ const routes = [
 		path: '/portfolio',
 		icon: <Icon as={MdBarChart} width='20px' height='20px' color='inherit' />,
 		component: Portfolio,
+	},
+	{
+		name: 'Stock Market',
+		layout: '/dashboard',
+		path: '/stock-market',
+		icon: <Icon as={MdOutlineShoppingCart} width='20px' height='20px' color='inherit' />,
+		component: Market,
 	},
 
 ];

@@ -119,7 +119,13 @@ async function updateStockPrice(symbol){
 
         stocksUpdates[symbol] = {
             'lastRefresh': formattedDate,
-            'price': priceUSD
+            'price': priceUSD,
+            'difference': response.data.d,
+            'differencePercent': response.data.dp,
+            'high': response.data.h,
+            'low': response.data.l,
+            'open': response.data.o,
+            'previousClose': response.data.pc,
         };
 
         // console.log("Updated: ", stocksUpdates[symbol]);
