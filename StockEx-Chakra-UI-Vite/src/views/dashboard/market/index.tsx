@@ -49,6 +49,7 @@ import { SupportedStocks } from '@/smartContractComunication/read/SupportedStock
 import { CloseOperation } from '@/smartContractComunication/send/CloseOperation';
 import fetchRealTimeStockPrices from '@/dataFetching/fetchRealTimeStockPrices'
 import fetchCurrencyPrices from '@/dataFetching/fetchCurrencyPrices'
+import fetchPreviewHistorical from '@/dataFetching/fetchPreviewHistorical'
 
 import React, { useState, useEffect } from 'react';
 import { web3Enable, web3Accounts } from '@polkadot/extension-dapp';
@@ -114,6 +115,36 @@ const useCurrencyPrices = () => {
    return { CurrencyPrices, CurrencyLoading, CurrencyError };
 };
 
+const useHistoricalPrices = () => {
+   const [HistoricalPrices, setHistoricalPrices] = useState<any | null>(null);
+   const [HistoricalLoading, setHistoricalLoading] = useState<boolean>(true);
+   const [HistoricalError, setHistoricalError] = useState<string | null>(null);
+
+   useEffect(() => {
+      const getPrices = async () => {
+         try {
+            const pricesFetched = await fetchPreviewHistorical();
+            if (pricesFetched === null) {
+               setHistoricalError('Failed to fetch historical stock prices');
+					console.log("FAILED FETCHING PRICES")
+            } else {
+               setHistoricalPrices(pricesFetched);
+					console.log("Historical PRICES: ", pricesFetched)
+            }
+         } catch (error) {
+				console.log('An unexpected error occurred' + error)
+            setHistoricalError('An unexpected error occurred');
+         } finally {
+            setHistoricalLoading(false);
+         }
+      };
+
+      getPrices();
+   }, []); // Empty dependency array means this effect runs once when the component mounts
+
+   return { HistoricalPrices, HistoricalLoading, HistoricalError };
+};
+
 function exchange(currency1:string, currency2:string, value:number, prices) {
 	return value * prices[currency2].price / prices[currency1].price;
 }
@@ -137,6 +168,8 @@ export default function UserReports() {
 	// fetch Prices:
 	const { stock_prices, stock_loading, stock_error } = useRealTimeStockPrices();
 	const { CurrencyPrices, CurrencyLoading, CurrencyError } = useCurrencyPrices();
+	const { HistoricalPrices, HistoricalLoading, HistoricalError } = useHistoricalPrices();
+
 	const [SelectedCurrency, setSelectedCurrency] = useState('USD');
 
 	// Vara Balance
@@ -199,6 +232,7 @@ export default function UserReports() {
 					priceDifference: 0.0,
 					percentDifference: 0.0,
 					lastClosedPrice: 0.0,
+					volume: HistoricalLoading ? 0 : HistoricalPrices[stock][0].volume,
 					trade: stock,
 					chart: stock
 				}
@@ -210,6 +244,7 @@ export default function UserReports() {
 				priceDifference: stock_prices[stock].difference,
 				percentDifference: stock_prices[stock].differencePercent,
 				lastClosedPrice: stock_prices[stock].previousClose,
+				volume: HistoricalLoading ? 0 : HistoricalPrices[stock][0].volume,
 				trade: stock,
 				chart: stock
 			}
@@ -234,6 +269,8 @@ export default function UserReports() {
 
 				<MarketTable 
 					tableData={tableData} 
+					currencyPrices = {CurrencyLoading ? null : CurrencyPrices}
+					historicalPrices = {HistoricalLoading ? null : HistoricalPrices}
 				/>
 				
 			</SimpleGrid>

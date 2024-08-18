@@ -64,6 +64,7 @@ const routes = [
 		path: '/stock-market',
 		icon: <Icon as={MdOutlineShoppingCart} width='20px' height='20px' color='inherit' />,
 		component: Market,
+		secondary: true,
 	},
 
 ];

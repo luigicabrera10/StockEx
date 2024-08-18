@@ -44,7 +44,9 @@ const allSupportedHistoricalStocksFile = '/home/northsoldier/Documents/Hackathon
 const historicalStockApiKeyFile = '/home/northsoldier/Documents/Hackathons/Varathon - StockEx/nodejs_server/historical-stocks-fetching-service/historicalStockApiKeyTwelveData.txt';
 const savedHistoricalStockPricesFile = '/home/northsoldier/Documents/Hackathons/Varathon - StockEx/nodejs_server/historical-stocks-fetching-service/savedHistoricalStocksPrices.json';
 const savedHistoricalStockPricesFolder = '/home/northsoldier/Documents/Hackathons/Varathon - StockEx/StockEx-Chakra-UI-Vite/public/DataBase/HistoricalStockPrices';
+const previewHistoricalPricesFile = '/home/northsoldier/Documents/Hackathons/Varathon - StockEx/StockEx-Chakra-UI-Vite/public/DataBase/HistoricalStockPrices/preview.json';
 
+const preview_size = 10;
 const updateRateHistoricalStocks = 24 * 60 * 60 * 1000;
 
 
@@ -92,8 +94,9 @@ async function saveHistoricalStockPrices(symbol = null) {
             // console.log(`Saved historical prices for ${sym} to file "${filePath}".`);
          }
       }
+      await savePreview();
    } catch (error) {
-      console.error("Error saving the stock prices:", error);
+      console.error("Error saving historical stock prices:", error);
    }
 }
 
@@ -106,6 +109,24 @@ async function loadAllHistoricalSupportedStocks() {
       console.error("Error reading the supported stocks file \"", allSupportedHistoricalStocksFile, "\":", error);
    }
 }
+
+
+async function savePreview(){
+   try {
+      let preview = {};
+      for (const sym of allSupportedHistoricalStocks) {
+         preview[sym] = historicalPricesUpdates[sym].serie.slice(0, preview_size);
+      }
+      const data = JSON.stringify(preview, null, 2);
+      await fs.writeFile(previewHistoricalPricesFile, data, 'utf-8');
+   } catch (error) {
+      console.error("Error saving Preview historical stock prices:", error);
+   }
+   console.log("Preview Prices updated!");
+}
+
+
+
 
 function isStockHistorySupported(symbol){
    return allSupportedHistoricalStocks.includes(symbol);
@@ -228,6 +249,7 @@ async function initHistoricalStockFetchingService() {
    await loadSavedHistoricalStockPrices();
 
    console.log("Saved Historical Prices loaded: ", Object.keys(historicalPricesUpdates), "\n");
+   await savePreview();
 
    // updateStocksDaily(); // Start the infinite update loop
    

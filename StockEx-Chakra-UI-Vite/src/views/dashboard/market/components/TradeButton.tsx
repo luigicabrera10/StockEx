@@ -44,7 +44,7 @@ const StockButton: React.FC<StockButtonProps> = ({ text, stock, balance, prices 
 
   const backgroundColor = useColorModeValue('#302656', '#302656');
   const buttonTextColor = useColorModeValue('white', 'whiteAlpha.900');
-  const modalBgColor = useColorModeValue('#120636', '#180d43');
+  const modalBgColor = useColorModeValue('#2d3748', '#2d3748');
   const modalTextColor = useColorModeValue('white', 'gray.100');
   const decimalConst = Math.pow(10, 12);
 
@@ -61,7 +61,7 @@ const StockButton: React.FC<StockButtonProps> = ({ text, stock, balance, prices 
 
    setDolarInvestment(dolar);
    if (prices !== null) {
-      const vara = (dolar * prices['VARA'].price / prices['USD'].price).toFixed(2);
+      const vara = (dolar * prices['VARA'] / prices['USD']).toFixed(2);
       setVaraInvestment(vara);
    }
   };
@@ -79,22 +79,25 @@ const StockButton: React.FC<StockButtonProps> = ({ text, stock, balance, prices 
 
    setVaraInvestment(vara);
    if (prices !== null) {
-      const dolar = (vara * prices['USD'].price / prices['VARA'].price).toFixed(2);
+      const dolar = (vara * prices['USD'] / prices['VARA']).toFixed(2);
       setDolarInvestment(dolar);
    }
   };
 
-  // Update RealVaraInvestment whenever VaraInvestment changes
-  useEffect(() => {
-    setRealVaraInvestment(Math.floor(parseFloat(VaraInvestment) * decimalConst));
-  }, [VaraInvestment]);
 
   useEffect(() => {
-    console.log("Balance: ", balance);
-    console.log("RealVaraInvestment: ", RealVaraInvestment);
-    console.log("Invalid: ", balance < RealVaraInvestment || RealVaraInvestment === 0);
-    setInvalidInvestment(balance < RealVaraInvestment || RealVaraInvestment === 0);
-  }, [RealVaraInvestment, balance]); 
+    const newRealVaraInvestment = Math.floor(parseFloat(VaraInvestment) * decimalConst);
+    if (newRealVaraInvestment !== RealVaraInvestment) {
+      setRealVaraInvestment(newRealVaraInvestment);
+    }
+  }, [VaraInvestment]);
+  
+  useEffect(() => {
+    const isInvalid = balance < RealVaraInvestment || RealVaraInvestment === 0;
+    if (isInvalid !== InvalidInvestment) {
+      setInvalidInvestment(isInvalid);
+    }
+  }, [RealVaraInvestment, balance]);
 
   return (
     <>
@@ -102,7 +105,7 @@ const StockButton: React.FC<StockButtonProps> = ({ text, stock, balance, prices 
         color='light'
         borderRadius="full"
         onClick={openModal}
-        padding="10px 18px"
+        padding="12px 20px"
       >
         {text}
       </Button>
@@ -144,11 +147,11 @@ const StockButton: React.FC<StockButtonProps> = ({ text, stock, balance, prices 
                 />
               </Box>
               {balance < RealVaraInvestment ? 
-                <Text textAlign="center" textColor='red' fontSize='15px'>Insufficient funds on your account</Text> 
+                <Text textAlign="center" textColor='red' fontSize='18px'>Insufficient funds on your account</Text> 
                 : <></>}
 
               {RealVaraInvestment <= 0 ? 
-                <Text textAlign="center" textColor='red' fontSize='15px'>Investment too low</Text> 
+                <Text textAlign="center" textColor='red' fontSize='18px'>Investment too low</Text> 
                 : <></>}
             </SimpleGrid>
 

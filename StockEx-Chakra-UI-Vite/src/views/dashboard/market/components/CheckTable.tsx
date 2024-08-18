@@ -1,6 +1,5 @@
 import { Flex, Box, Table, Checkbox, Tbody, Td, Text, Th, Thead, Tr, useColorModeValue } from '@chakra-ui/react';
 import * as React from 'react';
-import { CloseOperation } from '@/smartContractComunication/send/CloseOperation';
 import StockButton from './TradeButton'
 
 import {
@@ -14,7 +13,7 @@ import {
 
 // Custom components
 import Card from '../../../../components/card/Card';
-import fetchCurrencyPrices from '@/dataFetching/fetchCurrencyPrices'
+import MiniChart from '../../../../components/charts/MiniChart';
 import { useApi, useAccount, useBalance, useBalanceFormat } from '@gear-js/react-hooks';
 
 
@@ -24,6 +23,7 @@ type RowObj = {
 	priceDifference: [string, string];
 	percentDifference: [string, string];
 	lastClosedPrice: string;
+	volume: string,
 	trade: string,
 	chart: string,
 }
@@ -31,41 +31,12 @@ type RowObj = {
 const columnHelper = createColumnHelper<RowObj>();
 
 
-
-const useCurrencyPrices = () => {
-   const [CurrencyPrices, setCurrencyPrices] = React.useState<any | null>(null);
-   const [CurrencyLoading, setCurrencyLoading] = React.useState<boolean>(true);
-   const [CurrencyError, setCurrencyError] = React.useState<string | null>(null);
-
-   React.useEffect(() => {
-      const getPrices = async () => {
-         try {
-            const pricesFetched = await fetchCurrencyPrices();
-            if (pricesFetched === null) {
-               setCurrencyError('Failed to fetch stock prices');
-					console.log("FAILED FETCHING PRICES")
-            } else {
-               setCurrencyPrices(pricesFetched);
-					console.log("CURRENCY PRICES: ", pricesFetched)
-            }
-         } catch (error) {
-            setCurrencyError('An unexpected error occurred');
-         } finally {
-            setCurrencyLoading(false);
-         }
-      };
-
-      getPrices();
-   }, []); // Empty dependency array means this effect runs once when the component mounts
-
-   return { CurrencyPrices, CurrencyLoading, CurrencyError };
-};
-
-
-
 // const columns = columnsDataCheck;
-export default function CheckTable(props: { tableData: any }) {
+export default function CheckTable(props: { tableData: any, currencyPrices:any, historicalPrices:any }) {
 	const { tableData } = props;
+	const { currencyPrices } = props;
+	const { historicalPrices } = props;
+
 	const [ sorting, setSorting ] = React.useState<SortingState>([]);
 	const textColor = useColorModeValue('secondaryGray.900', 'white');
 	const borderColor = useColorModeValue('gray.200', 'whiteAlpha.100');
@@ -81,9 +52,8 @@ export default function CheckTable(props: { tableData: any }) {
 	const formattedBalance = balance ? getFormattedBalance(balance) : {value: '0.00', unit: 'TVARA'};
 	const varaBalance = parseFloat(formattedBalance.value) * decimalConst;
 
-	// Fetch Prices
-	const { CurrencyPrices, CurrencyLoading, CurrencyError } = useCurrencyPrices();
 
+	console.log ("FETCHED HISTORICAL: ", historicalPrices)
 
 	const columns = [
 		columnHelper.accessor('stock', {
@@ -129,6 +99,23 @@ export default function CheckTable(props: { tableData: any }) {
 					fontSize='16px'
 					color='gray.400'>
 					LAST CLOSED
+				</Text>
+			),
+			cell: (info) => (
+				<Text color={textColor} fontSize='18px' fontWeight='700' align='center'>
+					{info.getValue()}
+				</Text>
+			)
+		}),
+		columnHelper.accessor('volume', {
+			id: 'volume',
+			header: () => (
+				<Text
+					justifyContent='space-between'
+					align='center'
+					fontSize='16px'
+					color='gray.400'>
+					TRADING VOLUME
 				</Text>
 			),
 			cell: (info) => (
@@ -183,10 +170,17 @@ export default function CheckTable(props: { tableData: any }) {
 				</Text>
 			),
 			cell: (info) => (
-				<Box my='13px'>
-					<Text color={textColor} fontSize='18px	' fontWeight='700' textAlign="center">
+				<Box display='flex' justifyContent='center' alignContent='center'>
+					{/* <Text color={textColor} fontSize='18px	' fontWeight='700' textAlign="center">
 						{'Chart of ' + info.getValue()}
-					</Text>
+					</Text> */}
+
+					<MiniChart prices={
+						historicalPrices === null ? [0.0, 0.0] :  historicalPrices[info.getValue()]
+					} />
+
+					{/* <MiniChart prices={ [0.0, 0.0] } /> */}
+
 				</Box>
 			)
 		}),
@@ -203,7 +197,7 @@ export default function CheckTable(props: { tableData: any }) {
 			),
 			cell: (info) => (
 				<Box display="flex" justifyContent="center" alignItems="center">
-					<StockButton text="Trade Now!" stock={info.getValue()} balance={varaBalance} prices={CurrencyPrices} />
+					<StockButton text="Trade Now!" stock={info.getValue()} balance={varaBalance} prices={currencyPrices} />
 				</Box>
 			)
 		})

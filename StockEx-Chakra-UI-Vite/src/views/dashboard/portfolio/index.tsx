@@ -118,7 +118,7 @@ function exchange(currency1:string, currency2:string, value, prices) {
 	// console.log ("currency1: ", prices[currency1]);
 	// console.log ("currency2: ", prices[currency2]);
 	// console.log ("value: ", value);
-	return value * prices[currency2].price / prices[currency1].price;
+	return value * prices[currency2] / prices[currency1];
 }
 
 
@@ -465,7 +465,13 @@ export default function UserReports() {
 		else{
 			setInvestedPercent(0.0);
 		}
-		setEarningsPercent((100 * finalEarnings / finalInvested).toFixed(2));
+
+		if (parseFloat( finalInvested ) > 0.0){
+			setEarningsPercent((100 * finalEarnings / finalInvested).toFixed(2));
+		}
+		else{
+			setEarningsPercent('0.0');
+		}
 
 		if (!CurrencyLoading){
 			setVaraEarnings(exchange(SelectedCurrency, 'VARA', finalEarnings, CurrencyPrices).toFixed(2) + ' TVARA');

@@ -1,4 +1,7 @@
 import Table from './CheckTable';
+import * as React from 'react';
+import fetchAllHistoricalPrices from '@/dataFetching/fetchPreviewHistorical'
+
 
 
 function formatDate(dateString: String) {
@@ -11,9 +14,13 @@ function formatDate(dateString: String) {
 }
 
 export default function MarketTable(props: { 
-   tableData: any}) {
+   tableData: any,
+   currencyPrices: any,
+   historicalPrices: any}) {
 
    let { tableData } = props;
+   let { currencyPrices } = props;
+   let { historicalPrices } = props;
 
 
    console.log("Table Data before: ", tableData);
@@ -30,6 +37,7 @@ export default function MarketTable(props: {
             [ '+ ' + row.priceDifference.toFixed(2) + '%',  '#1aba1a'] : 
             ['- ' + (-1*row.priceDifference).toFixed(2) + '%', '#d62b2b'],
          lastClosedPrice:  '$ ' +  row.lastClosedPrice.toFixed(2),
+         volume: row.volume,
          trade: row.stock,
          chart: row.stock,
       }
@@ -37,7 +45,10 @@ export default function MarketTable(props: {
    
    console.log("Table Data after: ", tableData);
 
+
+
+
    return (
-      <Table tableData={tableData} />
+      <Table tableData={tableData} currencyPrices={currencyPrices} historicalPrices={historicalPrices}/>
    );
 }

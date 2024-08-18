@@ -10,7 +10,12 @@ const fetchCurrencyPrices = async () => {
          throw new Error('Network response was not ok');
       }
       const data = await response.json();
-      return data
+
+      const output = Object.fromEntries(
+         Object.entries(data).map(([key, value]) => [key, value.price])
+      );
+
+      return output;
    } catch (error) {
       console.error('Error fetching currencys prices:', error);
       return null;
