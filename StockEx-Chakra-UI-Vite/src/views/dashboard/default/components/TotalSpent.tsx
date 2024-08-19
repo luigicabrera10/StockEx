@@ -143,7 +143,7 @@ export default function TotalSpent(props: { [x: string]: any, data:number[], lab
 
 				<Flex flexDirection='column' me='20px' mt='10px' ml='10px'>
 					<Text color={textColor} fontSize='33px' textAlign='start' fontWeight='700' lineHeight='100%'>
-						{'Final Balance: $ ' + finalBalance.toFixed(2)}
+						{'Investment return: $ ' + finalBalance.toFixed(2)}
 					</Text>
 					<Flex align='center' mb='20px'>
 						<Text color='secondaryGray.600' fontSize='18px' fontWeight='500' mt='4px' me='12px'>

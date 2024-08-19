@@ -15,6 +15,7 @@ import {
 import Card from '../../../../components/card/Card';
 import MiniChart from '../../../../components/charts/MiniChart';
 import { useApi, useAccount, useBalance, useBalanceFormat } from '@gear-js/react-hooks';
+import StockIcon from '../../../../dataFetching/fetchIcons'
 
 
 type RowObj = {
@@ -68,9 +69,16 @@ export default function CheckTable(props: { tableData: any, currencyPrices:any, 
 				</Text>
 			),
 			cell: (info: any) => (
-				<Text color={textColor} fontSize='18px' fontWeight='700'>
-					{info.getValue()}
-				</Text>
+				<Flex flexDirection={'row'} gap='10px' alignContent='center' alignItems='center' justifyContent='start'>
+					
+					<StockIcon symbol={info.getValue()} height ='50px' width='50px' borderRadius='5px'/>
+
+					<Flex alignContent='center' alignItems='center'>
+						<Text color={textColor} fontSize='18px' fontWeight='700'>
+							{info.getValue()}
+						</Text>
+					</Flex>
+				</Flex>
 			)
 		}),
 		columnHelper.accessor('currentPrice', {

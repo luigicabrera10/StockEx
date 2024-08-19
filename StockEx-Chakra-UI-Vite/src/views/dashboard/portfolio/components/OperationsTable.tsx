@@ -52,7 +52,7 @@ export default function OperationTable(props: {
          stock: op.stock, 
          investment: "$ " + op.investment.toFixed(2),
          opType: op.opType ? "Sell" : "Buy",
-         openPrice: "$ " + op.openPrice,
+         openPrice: "$ " + op.openPrice.toFixed(2),
          actualPrice: "$ " + op.actualPrice,
          earning: op.earning >= 0 ? ["+ $ " + Math.abs(op.earning).toFixed(2), '#1aba1a'] : ["- $ " + Math.abs(op.earning).toFixed(2),'#d62b2b'],
          open_date: formatDate(op.open_date), 

@@ -331,9 +331,10 @@ export default function Overview() {
 				profitArray[i] = parseFloat((dailyProfit / decimalConst).toFixed(2));
 			}
 
-			const candles = HistoricalPrices['TSLA'];
-			const candle = candles[HistoricalPrices['TSLA'].length-1];
-			const dayOfWeek = new Date(`${candle.datetime}T00:00:00Z`).toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' }).toUpperCase();
+			// const candles = HistoricalPrices['TSLA'];
+			// const candle = candles[HistoricalPrices['TSLA'].length-1];
+			// const dayOfWeek = new Date(`${candle.datetime}T00:00:00Z`).toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' }).toUpperCase();
+			const dayOfWeek = new Date().toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' }).toUpperCase();
 			datesArray[0] = dayOfWeek; 
 
 
@@ -364,14 +365,13 @@ export default function Overview() {
 			setLineChartData(profitArray.reverse());
 			setLineChartLabels(datesArray.reverse());
 
-			setTotalBalance(exchange('VARA', 'USD', parseFloat(formattedBalance.value), CurrencyPrices) 
-			+ (dailyProfit / decimalConst) + (totalInvested / decimalConst));
+			setTotalBalance((dailyProfit / decimalConst) + (totalInvested / decimalConst));
 
 			setProfitPercent(100 * dailyProfit / totalInvested);
 
 		}
 
-	}, [HistoricalPrices, data, stock_prices]); // Every time finalOperations changes
+	}, [HistoricalPrices, data, stock_prices, formattedBalance]); // Every time finalOperations changes
 
 
 	console.log("BarChartData: ", BarChartData);

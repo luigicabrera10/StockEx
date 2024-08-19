@@ -5,6 +5,8 @@ import Card from '../../../../components/card/Card';
 // Assets
 import { MdEdit } from 'react-icons/md';
 
+import StockIcon from '../../../../dataFetching/fetchIcons'
+
 
 function formatDate(dateString: String) {
    const date = new Date(dateString);
@@ -32,8 +34,11 @@ export default function Project(props: {
 	
 	return (
 		<Card bg={bg} mb={mb} {...rest} p='14px'>
-			<Flex align='center' direction={{ base: 'column', md: 'row' }} alignContent='center'>
+			<Flex align='center' gap='20px' direction={{ base: 'column', md: 'row' }} alignContent='center'>
 				{/* <Image h='80px' w='80px' src={image} borderRadius='8px' me='20px' /> */}
+
+				<StockIcon symbol={operation.tickerSymbol} height ='80px' width='80px' borderRadius='12px'/>
+
 				<Box mt={{ base: '10px', md: '0' }}>
 					<Text color={textColorPrimary} fontWeight='500' fontSize='md' mb='4px'>
 						{operation.tickerSymbol}
@@ -49,7 +54,7 @@ export default function Project(props: {
 						<Box marginX={'4px'}></Box>
 						<Text color={brandColor} fontSize='18px' textColor={operation.profit >= 0 ? 'green' : 'red'}>
 							{operation.profit >= 0 ? '   +   $ ' + (operation.profit / decimalConst).toFixed(2) : '   -   $' + (-1 * operation.profit / decimalConst).toFixed(2)}  
-							{'  (' + (operation.profit >= 0 ? '+' : '') +(operation.profit / operation.investment).toFixed(2) + '%)'}
+							{'  (' + (operation.profit >= 0 ? ' + ' : ' - ') + (100 *Math.abs(operation.profit) / operation.investment).toFixed(2) + '% )'}
 						</Text>
 					</Flex>
 				</Box>

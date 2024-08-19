@@ -244,7 +244,7 @@ async function parseAndSendRealTimeStockPrices(stocks_symbols){
 async function updateRealTimeStocks(){
 
     const supportedStocks = await loadAllSupportedStocks();
-    const updateStockTimeRate = 3 * 60 * 1000; // 3 minutes in milliseconds
+    const updateStockTimeRate = 2 * 60 * 1000; // 3 minutes in milliseconds
     // const updateStockTimeRate = 30 * 60 * 1000; // 30 minutes in milliseconds (FOR TESTING)
 
     while (true) {
@@ -279,7 +279,7 @@ async function updateRealTimeStocks(){
                     await wait(60000);
                 }
                 else{
-                    await wait(1100); // 1.1 seconds delay between each call
+                    // await wait(1100); // 1.1 seconds delay between each call
                 }
             }
 
