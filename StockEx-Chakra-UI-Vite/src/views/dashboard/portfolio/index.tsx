@@ -1,25 +1,3 @@
-/*!
-  _   _  ___  ____  ___ ________  _   _   _   _ ___   
- | | | |/ _ \|  _ \|_ _|__  / _ \| \ | | | | | |_ _| 
- | |_| | | | | |_) || |  / / | | |  \| | | | | || | 
- |  _  | |_| |  _ < | | / /| |_| | |\  | | |_| || |
- |_| |_|\___/|_| \_\___/____\___/|_| \_|  \___/|___|
-                                                                                                                                                                                                                                                                                                                                       
-=========================================================
-* Horizon UI - v1.1.0
-=========================================================
-
-* Product Page: https://www.horizon-ui.com/
-* Copyright 2022 Horizon UI (https://www.horizon-ui.com/)
-
-* Designed and Coded by Simmmple
-
-=========================================================
-
-* The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-*/
-
 // Chakra imports
 import { Avatar, Box, Grid, Flex, FormLabel, Icon, Select, SimpleGrid, useColorModeValue } from '@chakra-ui/react';
 // Assets
@@ -326,8 +304,8 @@ export default function UserReports() {
 			symbol = op.tickerSymbol === 'NVDIA' ? 'NVDA' : symbol;
 			// XD
 
-			const investment = (op.investment / decimalConst).toFixed(2); 
-			const openPrice = (op.openPrice / decimalConst).toFixed(2);
+			const investment = (op.investment / decimalConst); 
+			const openPrice = op.openPrice / decimalConst;
 
 			let actualPrice = openPrice; // Default to openPrice if data is not available
 
@@ -337,10 +315,20 @@ export default function UserReports() {
 
 			let profit;
 			if (!op.operationType) { // Buy Operation
-				profit = (op.leverage * investment * ((actualPrice / openPrice ) - 1)).toFixed(2); 
+				if (op.closedPrice == 0){
+					profit = (op.leverage * investment * ((actualPrice / openPrice ) - 1)); 
+				}
+				else{
+					profit = (op.leverage * investment * (((op.closedPrice / decimalConst) / openPrice ) - 1)); 
+				}
 			}
 			else{ // Sell operation
-				profit = (op.leverage * investment * (openPrice  - actualPrice) / openPrice).toFixed(2);
+				if (op.closedPrice == 0){
+					profit = (op.leverage * investment * (openPrice  - actualPrice) / openPrice);
+				}
+				else{
+					profit = (op.leverage * investment * (openPrice  - (op.closedPrice / decimalConst)) / openPrice);
+				}
 			}
 
 			// console.log("Op Type: ", op.operationType);
@@ -434,9 +422,9 @@ export default function UserReports() {
 			else{
 				activeOp = activeOp + 1;
 				invested = invested + parseFloat(op.investment);
+				earnings += op.earning;
+				console.log('For stock ', op.stock, 'getting: ', op.earning);
 			}
-			earnings = earnings + parseFloat(op.earning);
-
 
 			// Parse the open and close dates
 			const openDate = new Date(op.open_date);
@@ -693,7 +681,7 @@ export default function UserReports() {
 					<Box>
 						<FormLabel fontWeight="bold" fontSize='20px'>Profit</FormLabel>
 						<RangeSlider
-							defaultValue={MinMaxEarnings}
+							defaultValue={[-Number.MAX_VALUE, Number.MAX_VALUE]}
 							min={MinMaxEarnings[0]}
 							max={MinMaxEarnings[1]}
 							step={1}

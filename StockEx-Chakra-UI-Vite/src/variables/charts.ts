@@ -27,7 +27,7 @@ export const barChartOptionsDailyTraffic: any = {
 		theme: 'dark'
 	},
 	xaxis: {
-		categories: [ '00', '04', '08', '12', '14', '16', '18' ],
+		categories: [ 'TSLA', 'MSFT', 'SOMEJAILR', '12', '14', '16', '18' ],
 		show: false,
 		labels: {
 			show: true,
@@ -307,8 +307,8 @@ export const barChartOptionsConsumption: any = {
 };
 
 export const pieChartOptions: any = {
-	labels: [ 'Your files', 'System', 'Empty' ],
-	colors: [ '#4318FF', '#6AD2FF', '#EFF4FB' ],
+	labels: [ 'Active Operations', 'System', 'Empty', 'Active Operations', 'System', 'Empty' , 'Active Operations', 'System', 'Empty'  ],
+	colors: [ '#4318FF', '#6AD2FF', '#EFF4FB','#4318FF', '#6AD2FF', '#EFF4FB','#4318FF', '#6AD2FF', '#EFF4FB','#4318FF', '#6AD2FF', '#EFF4FB'	 ],
 	chart: {
 		width: '50px'
 	},
@@ -320,15 +320,18 @@ export const pieChartOptions: any = {
 		}
 	},
 	legend: {
-		show: false
+		show: true,
+		labels: {
+			colors: '#FFFFFF', // Set the legend text color to white
+		},
 	},
 	dataLabels: {
-		enabled: false
+		enabled: true
 	},
 	hover: { mode: null },
 	plotOptions: {
 		donut: {
-			expandOnClick: false,
+			expandOnClick: true,
 			donut: {
 				labels: {
 					show: false
@@ -337,7 +340,7 @@ export const pieChartOptions: any = {
 		}
 	},
 	fill: {
-		colors: [ '#4318FF', '#6AD2FF', '#EFF4FB' ]
+		colors: [ '#4318FF', '#6AD2FF', '#EFF4FB','#4318FF', '#6AD2FF', '#EFF4FB','#4318FF', '#6AD2FF', '#EFF4FB','#4318FF', '#6AD2FF', '#EFF4FB'	 ]
 	},
 	tooltip: {
 		enabled: true,
@@ -345,19 +348,20 @@ export const pieChartOptions: any = {
 	}
 };
 
-export const pieChartData = [ 63, 25, 12 ];
+export const pieChartData = [ 63, 25, 12, 63, 25, 12, 63, 25, 12 ];
 
 // Total Spent Default
 
 export const lineChartDataTotalSpent = [
 	{
 		name: 'Revenue',
-		data: [ 50, 64, 48, 66, 49, 68 ]
+		data: [ 50, 64, 48, 66, 49, 68, 56, 48, 53, 75 ]
 	},
-	{
-		name: 'Profit',
-		data: [ 30, 40, 24, 46, 20, 46 ]
-	}
+	// {
+	// 	name: 'Profit',
+	// 	data: [ 30, 40, 24, 46, 20, 46, 55, 60, 45, 42 ]
+	// 	// data: [ 3, 4, 2, 0, 1, 2 ]
+	// }
 ];
 
 export const lineChartOptionsTotalSpent: any = {
@@ -374,7 +378,8 @@ export const lineChartOptionsTotalSpent: any = {
 			color: '#4318FF'
 		}
 	},
-	colors: [ '#4318FF', '#39B8FF' ],
+	// colors: [ '#4318FF', '#39B8FF' ],
+	colors: [ '#39B8FF' ],
 	markers: {
 		size: 0,
 		colors: 'white',
@@ -394,7 +399,7 @@ export const lineChartOptionsTotalSpent: any = {
 		theme: 'dark'
 	},
 	dataLabels: {
-		enabled: false
+		enabled: true
 	},
 	stroke: {
 		curve: 'smooth',
@@ -402,7 +407,7 @@ export const lineChartOptionsTotalSpent: any = {
 	},
 	xaxis: {
 		type: 'numeric',
-		categories: [ 'SEP', 'OCT', 'NOV', 'DEC', 'JAN', 'FEB' ],
+		categories: [ 'SEPegergae', 'OeragaegaergCT', 'NOeagegraeV', 'DEC', 'JAN', 'FEB', 'MRZ', 'ABRL', 'MAY' , 'JUN'],
 		labels: {
 			style: {
 				colors: '#A3AED0',

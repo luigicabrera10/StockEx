@@ -50,11 +50,11 @@ export default function OperationTable(props: {
    tableData = tableData.map((op) => {
       return {
          stock: op.stock, 
-         investment: "$ " + op.investment,
+         investment: "$ " + op.investment.toFixed(2),
          opType: op.opType ? "Sell" : "Buy",
          openPrice: "$ " + op.openPrice,
          actualPrice: "$ " + op.actualPrice,
-         earning: op.earning >= 0 ? ["+ $ " + Math.abs(op.earning), '#1aba1a'] : ["- $ " + Math.abs(op.earning),'#d62b2b'],
+         earning: op.earning >= 0 ? ["+ $ " + Math.abs(op.earning).toFixed(2), '#1aba1a'] : ["- $ " + Math.abs(op.earning).toFixed(2),'#d62b2b'],
          open_date: formatDate(op.open_date), 
          closed_date: op.closed_date == "" ? " - " : formatDate(op.closed_date), 
          leverage: "X " + op.leverage,
