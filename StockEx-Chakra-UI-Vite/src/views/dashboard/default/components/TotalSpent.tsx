@@ -64,10 +64,11 @@ export default function TotalSpent(props: { [x: string]: any, data:number[], lab
 			showNullDataPoints: true
 		},
 		tooltip: {
-			theme: 'dark'
+			theme: 'dark',
+			enable: true,
 		},
 		dataLabels: {
-			enabled: true
+			enabled: false
 		},
 		stroke: {
 			curve: 'smooth',

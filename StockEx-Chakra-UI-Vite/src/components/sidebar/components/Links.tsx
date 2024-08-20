@@ -49,7 +49,7 @@ export function SidebarLinks(props: {
 											<Text
 												me='auto'
 												color={activeRoute(route.path.toLowerCase()) ? activeColor : textColor}
-												fontWeight={activeRoute(route.path.toLowerCase()) ? 'bold' : 'normal'}>
+												fontWeight={activeRoute(route.path.toLowerCase()) ? 'bold' : 'normal'} fontSize='18px'>
 												{route.name}
 											</Text>
 										</Flex>
@@ -70,7 +70,7 @@ export function SidebarLinks(props: {
 										<Text
 											me='auto'
 											color={activeRoute(route.path.toLowerCase()) ? activeColor : inactiveColor}
-											fontWeight={activeRoute(route.path.toLowerCase()) ? 'bold' : 'normal'}>
+											fontWeight={activeRoute(route.path.toLowerCase()) ? 'bold' : 'normal'} fontSize='18px'>
 											{route.name}
 										</Text>
 										<Box h='36px' w='4px' bg='brand.400' borderRadius='5px' />

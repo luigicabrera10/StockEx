@@ -17,7 +17,9 @@ export default function OperationTable(props: {
    stock: string,
    investment: number[],
    earnings: number[],
-   leverage: number[]}) {
+   leverage: number[],
+   dates: Date[]
+   }) {
 
    let { tableData } = props;
    const { opState } = props;
@@ -26,6 +28,7 @@ export default function OperationTable(props: {
    const { investment } = props;
    const { earnings } = props;
    const { leverage } = props;
+   const { dates } = props;
 
    console.log("Table Data befor: ", tableData);
 
@@ -45,6 +48,11 @@ export default function OperationTable(props: {
    );
    tableData = tableData.filter(operation => 
       leverage[0] <= operation.leverage && operation.leverage <= leverage[1]
+   );
+
+   console.log("FILTER DATES: ", dates)
+   tableData = tableData.filter(operation => 
+      dates[0] <= new Date(operation.open_date) && new Date(operation.open_date) <= dates[1]
    );
 
    tableData = tableData.map((op) => {

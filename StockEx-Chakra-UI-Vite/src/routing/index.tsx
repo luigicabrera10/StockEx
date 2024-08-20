@@ -41,7 +41,7 @@ function Routing() {
       />
       <Route
         path="/"
-        element={<Navigate to="/dashboard/default" />}
+        element={<Navigate to="/dashboard/profile" />}
       />
 
       {uniqueLayouts.map(({ layout, component }) => (

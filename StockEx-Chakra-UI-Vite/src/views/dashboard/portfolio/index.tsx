@@ -24,7 +24,7 @@ import {Slider, SliderTrack, SliderFilledTrack, SliderThumb, Text, Stack } from 
 import { RangeSlider, RangeSliderTrack, RangeSliderFilledTrack, RangeSliderThumb } from '@chakra-ui/react';
 
 import { AllOperations } from '@/smartContractComunication/read/AllOperations';
-import { CloseOperation } from '@/smartContractComunication/send/CloseOperation';
+import { CloseAllOperations } from '@/smartContractComunication/send/CloseAllOperations';
 import fetchRealTimeStockPrices from '@/dataFetching/fetchRealTimeStockPrices'
 import fetchCurrencyPrices from '@/dataFetching/fetchCurrencyPrices'
 
@@ -33,6 +33,7 @@ import { web3Enable, web3Accounts } from '@polkadot/extension-dapp';
 
 import {getHexAdress} from '../../../utils/getHexAdress';
 import { useApi, useAccount, useBalance, useBalanceFormat } from '@gear-js/react-hooks';
+import { HSeparator } from '../../../components/separator/Separator';
 
 
 
@@ -123,6 +124,10 @@ export default function UserReports() {
 	const [EarningsRange, setEarningsRange] = useState([0, 10000]);
 	const [MinMaxEarnings, setMinMaxEarnings] = useState([0, 10000]);
 
+	const DefaultSelectedDates: [Date, Date] = [(new Date()).setMonth((new Date()).getMonth() - 1), new Date((new Date()).setHours(23,59,59,59))];
+	const [SelectedDates, setSelectedDates] = useState<[Date, Date]>(DefaultSelectedDates);
+	// const [DefaultSelectedDates, setDefaultSelectedDates] = useState<[Date, Date]>([new Date(0), new Date()]);
+
 	// fetch Prices:
 	const { stock_prices, stock_loading, stock_error } = useRealTimeStockPrices();
 	const { CurrencyPrices, CurrencyLoading, CurrencyError } = useCurrencyPrices();
@@ -201,6 +206,29 @@ export default function UserReports() {
 		console.log("Changed Type to: ", event.target.value);
 		setOperationTypeValue(event.target.value);
 	};	
+
+	const handleDateChange = (dates) => {
+		console.log("DATES: ", dates)
+		if (Array.isArray(dates)) {
+			 const [start, end] = dates;
+			 const startMidnight = new Date(start);
+			 startMidnight.setHours(0, 0, 0, 0);
+
+			 const endMidnight = new Date(end);
+			 endMidnight.setHours(23, 59, 59, 59);
+
+			 setSelectedDates([startMidnight, endMidnight]);
+			 console.log('Selected Range:', [startMidnight, endMidnight]);
+		} 
+		else {
+			console.log("DATESIS NOT AN ARRAY?")
+			// const singleDateMidnight = new Date(dates);
+			// singleDateMidnight.setHours(0, 0, 0, 0);
+
+			// setSelectedDates(singleDateMidnight);
+			// console.log('Selected Date:', singleDateMidnight);
+		}
+  };
 
 	const getAllStocks = (finalOperations) => {
 		const uniqueStocks = Array.from(new Set(finalOperations.map(op => op.stock)));
@@ -393,6 +421,43 @@ export default function UserReports() {
 	}, [MinMaxEarnings]); 
 
 
+
+	// useEffect(() => {
+
+	// 	const nullDate = new Date(0);
+	// 	let newMinMaxDates:[Date, Date] = [nullDate, nullDate];
+
+	// 	finalOperations.forEach((op) => {
+
+	// 		const openDate = new Date(op.open_date);
+
+	// 		if (newMinMaxDates[0] === nullDate || openDate < newMinMaxDates[0]){
+	// 			newMinMaxDates[0] = openDate;
+	// 		}
+	// 		if (newMinMaxDates[1] == nullDate || openDate > newMinMaxDates[1]){
+	// 			newMinMaxDates[1] = openDate;
+	// 		}
+
+	// 	});
+
+	// 	newMinMaxDates = [new Date(newMinMaxDates[0].setHours(0, 0, 0, 0)) , new Date(newMinMaxDates[1].setHours(23, 59, 59, 59))];
+
+	// 	// Check if the new computed value is different from the current state
+	// 	if (newMinMaxDates[0] !== DefaultSelectedDates[0] || newMinMaxDates[1] !== DefaultSelectedDates[1]) {
+	// 		// setDefaultSelectedDates(newMinMaxDates);
+	// 	}
+	// }, [finalOperations]); // Run this effect whenever finalOperations changes
+
+	// // Another useEffect to update InvestmentRange when MinMaxInvestment changes
+	// useEffect(() => {
+	// 	// Only update InvestmentRange if it's not already within the new MinMaxInvestment range
+	// 	if (SelectedDates[0] !== DefaultSelectedDates[0] || SelectedDates[1] !== DefaultSelectedDates[1]) {
+	// 		setSelectedDates(DefaultSelectedDates);
+	// 	}
+	// }, [DefaultSelectedDates]); 
+
+
+
 	// SET Mini Statics:
 
 	useEffect(() => {
@@ -405,12 +470,19 @@ export default function UserReports() {
 		let closedMonth: number = 0;
 		let openMonth: number = 0;
 
+		// const nullDate = new Date(0);
+		// let minDate: Date = nullDate;
+		// let maxDate: Date = nullDate;
+
+		// console.log('BOTH MIN MAX DATES', minDate);
+		// console.log('BOTH MIN MAX DATES', maxDate);
+
 		// Get the current month and year
 		const currentMonth = new Date().getMonth();
 		const currentYear = new Date().getFullYear();
 
 		finalOperations.forEach((op) => {
-			if (op.closed_date !== '') {
+			if (op.closed_date !== '') { // Closed
 				closedOp = closedOp + 1;
 				
 				// Check if the operation was closed this month
@@ -419,7 +491,7 @@ export default function UserReports() {
 					closedMonth += 1;
 				}
 			}
-			else{
+			else{ // Active
 				activeOp = activeOp + 1;
 				invested = invested + parseFloat(op.investment);
 				earnings += op.earning;
@@ -428,11 +500,17 @@ export default function UserReports() {
 
 			// Parse the open and close dates
 			const openDate = new Date(op.open_date);
-			
+
+			// if (minDate === nullDate || openDate < minDate){
+			// 	minDate = openDate;
+			// }
+			// if (maxDate == nullDate || openDate > maxDate){
+			// 	maxDate = openDate;
+			// }
 
 			// Check if the operation was opened this month
 			if (openDate.getMonth() === currentMonth && openDate.getFullYear() === currentYear) {
-				 openMonth += 1;
+				openMonth += 1;
 			}
 	  
 		})
@@ -470,14 +548,18 @@ export default function UserReports() {
 
 		setOpenThisMonth(openMonth);
 		setClosedThisMonth(closedMonth);
+
+		// if (DefaultSelectedDates[0] !== new Date(minDate.setHours(0, 0, 0, 0)) || DefaultSelectedDates[1] !== new Date(maxDate.setHours(23, 59, 59, 59))){
+		// 	// setDefaultSelectedDates([new Date(minDate.setHours(0, 0, 0, 0)), new Date(maxDate.setHours(23, 59, 59, 59))]);
+		// }
+		// console.log('DEFAULT SELECTED DATES: ', DefaultSelectedDates);
 		
 
 	}, [finalOperations]); // Every time finalOperations changes
 
-	// Date testing
-	const now = new Date();
-   const currentDate = now.toISOString();
-   console.log(currentDate);
+
+	console.log('SELECTED DATES: ', SelectedDates);
+	console.log('DEFAULT SELECTED DATES: ', DefaultSelectedDates);
 
 
 	return (
@@ -627,12 +709,22 @@ export default function UserReports() {
 					stock={StockValue}
 					investment={InvestmentRange}
 					earnings={EarningsRange}
-					leverage={LeverageRange}/>
+					leverage={LeverageRange}
+					dates={SelectedDates}	
+				/>
 				
 				<SimpleGrid columns={{ base: 1, md: 1, xl: 1 }} gap='20px' mb='20px' alignContent='start'>
 
 					<Box margin='0px'>
 					</Box>
+
+					<Box>
+						<CloseAllOperations/>
+					</Box>
+
+					<HSeparator mb='0px' />
+
+					
 
 					<Box>
 						<FormLabel fontWeight="bold" fontSize='20px' >Operation State</FormLabel>
@@ -711,6 +803,13 @@ export default function UserReports() {
 							<RangeSliderThumb index={1} />
 						</RangeSlider>
 						<Text>Min: {LeverageRange[0]} - Max: {LeverageRange[1]}</Text>
+					</Box>
+
+
+					<Box>
+						<FormLabel fontWeight="bold" fontSize='20px'>Open Date</FormLabel>
+						
+						<MiniCalendar minW='100%' defaultValue={DefaultSelectedDates} selectRange={true} onDateChange={handleDateChange} />
 					</Box>
 				
 				</SimpleGrid>

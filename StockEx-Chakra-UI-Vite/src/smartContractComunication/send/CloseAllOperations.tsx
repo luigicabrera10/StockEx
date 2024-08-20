@@ -2,10 +2,12 @@
 import { useAccount, useApi, useAlert } from "@gear-js/react-hooks";
 import { web3FromSource } from "@polkadot/extension-dapp";
 import { ProgramMetadata } from "@gear-js/api";
-import { Button } from "@gear-js/ui";
+// import { Button } from "@gear-js/ui";
+import { Button } from '@chakra-ui/react';
+
 import { Flex } from "@chakra-ui/react";
 
-function CloseOperation({ operationId }) {
+function CloseAllOperations() {
 
    const alert = useAlert();
    const { accounts, account } = useAccount();
@@ -18,16 +20,13 @@ function CloseOperation({ operationId }) {
 
    const now = new Date();
    const currentDate = now.toISOString();
-   // console.log(currentDate);
+   console.log(currentDate);
 
    const message = {
       destination: programID,
       payload: {
-      "CloseOperation": [
-         operationId,
-         currentDate
-      ]
-   },
+         "CloseAllOperations": currentDate
+      },
       gasLimit: 9899819245,
       value: 0,
    };
@@ -66,8 +65,11 @@ function CloseOperation({ operationId }) {
    };
 
    return <Flex align='center' justifyContent='center'> 
-         <Button text="Close Now" onClick={signer} color='light' size="medium" style={{fontSize: '17px' }}/> 
+         <Button onClick={signer} backgroundColor='light' color='white' borderRadius="18px" paddingX="25px" paddingY='25px' fontSize='26px'> 
+            Close all operations!
+         </Button>
+
       </Flex>;
 }
 
-export { CloseOperation };
+export { CloseAllOperations };

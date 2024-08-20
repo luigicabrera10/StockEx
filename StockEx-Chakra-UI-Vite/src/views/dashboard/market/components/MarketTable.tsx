@@ -34,8 +34,8 @@ export default function MarketTable(props: {
             [ '+ $ ' + row.priceDifference.toFixed(2),  'rgb(0,245,0)'] : 
             ['- $ ' + (-1*row.priceDifference).toFixed(2), 'rgb(245,0,0)'],
          percentDifference: row.percentDifference >= 0 ?
-            [ '+ ' + row.priceDifference.toFixed(2) + '%',  'rgb(0,245,0)'] : 
-            ['- ' + (-1*row.priceDifference).toFixed(2) + '%', 'rgb(245,0,0)'],
+            [ '+ ' + row.percentDifference.toFixed(2) + '%',  'rgb(0,245,0)'] : 
+            ['- ' + (-1*row.percentDifference).toFixed(2) + '%', 'rgb(245,0,0)'],
          lastClosedPrice:  '$ ' +  row.lastClosedPrice.toFixed(2),
          volume: row.volume,
          trade: row.stock,

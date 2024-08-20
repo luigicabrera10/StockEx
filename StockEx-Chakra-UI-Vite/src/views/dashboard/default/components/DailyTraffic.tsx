@@ -9,115 +9,129 @@ import Card from '../../../../components/card/Card';
 // Assets
 import { RiArrowUpSFill } from 'react-icons/ri';
 
+
+function transformData(data) {
+	return data.map(value => Math.log10(value + 1)); // Add 1 to avoid log(0)
+}
+
 export default function DailyTraffic(props: { [x: string]: any, data:any, labels: any}) {
 	const { data } = props;
 	const { labels } = props;
 	const { ...rest } = props;
 
 
+	// const barChartDataDailyTraffic = [
+	// 	{
+	// 		name: 'Daily Traffic',
+	// 		data: data
+	// 	}
+	// ];
+
+	const transformedData = transformData(data);
+
 	const barChartDataDailyTraffic = [
 		{
-			name: 'Daily Traffic',
-			data: data
+			name: 'Daily Traded Volume',
+			data: transformedData
 		}
 	];
 
 
 	const barChartOptionsDailyTraffic: any = {
 		chart: {
-			toolbar: {
-				show: false
-			}
+		  toolbar: {
+			 show: false
+		  }
 		},
 		tooltip: {
-			style: {
-				fontSize: '12px',
-				fontFamily: undefined
-			},
-			onDatasetHover: {
-				style: {
-					fontSize: '12px',
-					fontFamily: undefined
-				}
-			},
-			theme: 'dark'
+		  y: {
+			 formatter: function (value, { dataPointIndex }) {
+				return data[dataPointIndex]; // Return the original value
+			 }
+		  },
+		  theme: 'dark'
 		},
 		xaxis: {
-			categories: labels,
-			show: false,
-			labels: {
-				show: true,
-				style: {
-					colors: '#A3AED0',
-					fontSize: '14px',
-					fontWeight: '500'
-				}
-			},
-			axisBorder: {
-				show: false
-			},
-			axisTicks: {
-				show: false
-			}
+		  categories: labels,
+		  show: false,
+		  labels: {
+			 show: true,
+			 style: {
+				colors: '#A3AED0',
+				fontSize: '14px',
+				fontWeight: '500'
+			 }
+		  },
+		  axisBorder: {
+			 show: false
+		  },
+		  axisTicks: {
+			 show: false
+		  }
 		},
 		yaxis: {
-			show: false,
-			color: 'black',
-			labels: {
-				show: false,
-				style: {
-					colors: '#CBD5E0',
-					fontSize: '14px'
-				}
-			}
+		  show: false	,
+		  labels: {
+			 show: true,
+			 style: {
+				colors: '#CBD5E0',
+				fontSize: '14px'
+			 },
+			 formatter: function (value) {
+				return Math.pow(10, value).toFixed(2); // Convert back to original scale
+			 }
+		  }
 		},
 		grid: {
-			show: false,
-			strokeDashArray: 5,
-			yaxis: {
-				lines: {
-					show: true
-				}
-			},
-			xaxis: {
-				lines: {
-					show: false
-				}
-			}
+		  show: false,
+		  strokeDashArray: 5,
+		  yaxis: {
+			 lines: {
+				show: true
+			 }
+		  },
+		  xaxis: {
+			 lines: {
+				show: false
+			 }
+		  }
 		},
 		fill: {
-			type: 'gradient',
-			gradient: {
-				type: 'vertical',
-				shadeIntensity: 1,
-				opacityFrom: 0.7,
-				opacityTo: 0.9,
-				colorStops: [
-					[
-						{
-							offset: 0,
-							color: '#4318FF',
-							opacity: 1
-						},
-						{
-							offset: 100,
-							color: 'rgba(67, 24, 255, 1)',
-							opacity: 0.28
-						}
-					]
+		  type: 'gradient',
+		  gradient: {
+			 type: 'vertical',
+			 shadeIntensity: 1,
+			 opacityFrom: 0.7,
+			 opacityTo: 0.9,
+			 colorStops: [
+				[
+				  {
+					 offset: 0,
+					 color: '#4318FF',
+					 opacity: 1
+				  },
+				  {
+					 offset: 100,
+					 color: 'rgba(67, 24, 255, 1)',
+					 opacity: 0.28
+				  }
 				]
-			}
+			 ]
+		  }
 		},
 		dataLabels: {
-			enabled: false
+		  enabled: false
 		},
 		plotOptions: {
-			bar: {
-				borderRadius: 10,
-				columnWidth: '40px'
-			}
+		  bar: {
+			 borderRadius: 10,
+			//  columnWidth: '40px'
+		  }
 		}
 	};
+	 
+	 
+	 
 
 	// Chakra Color Mode
 	const textColor = useColorModeValue('secondaryGray.900', 'white');

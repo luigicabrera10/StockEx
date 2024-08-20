@@ -54,7 +54,7 @@ export default function Project(props: {
 						<Box marginX={'4px'}></Box>
 						<Text color={brandColor} fontSize='18px' textColor={operation.profit >= 0 ? 'green' : 'red'}>
 							{operation.profit >= 0 ? '   +   $ ' + (operation.profit / decimalConst).toFixed(2) : '   -   $' + (-1 * operation.profit / decimalConst).toFixed(2)}  
-							{'  (' + (operation.profit >= 0 ? ' + ' : ' - ') + (100 *Math.abs(operation.profit) / operation.investment).toFixed(2) + '% )'}
+							{'  (' + (operation.profit >= 0 ? ' + ' : ' - ') + (100 *Math.abs(operation.profit) / operation.investment).toFixed(2) + ' % )'}
 						</Text>
 					</Flex>
 				</Box>
