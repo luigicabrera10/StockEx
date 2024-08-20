@@ -122,6 +122,21 @@ const CandleChart: React.FC<CandleChartProps> = ({ data }) => {
           color: '#FFFFFF',  // Make axis border white
         },
       },
+      tooltip: {
+         enabled: true,
+         theme: 'dark', // Ensure the tooltip has a dark theme
+         style: {
+           fontSize: '12px', // Font size for tooltip text
+           color: '#FFFFFF', // Text color for tooltip
+         },
+         marker: {
+           show: true,
+         },
+         onDatasetHover: {
+           highlightDataSeries: true,
+         },
+         fillSeriesColor: true, // Fill the tooltip background with the series color
+       },
     };
 
    return (
