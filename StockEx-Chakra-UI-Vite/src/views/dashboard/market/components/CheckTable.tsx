@@ -69,7 +69,7 @@ export default function CheckTable(props: { tableData: any, currencyPrices:any, 
 				</Text>
 			),
 			cell: (info: any) => (
-				<Flex flexDirection={'row'} gap='10px' alignContent='center' alignItems='center' justifyContent='start'>
+				<Flex flexDirection={'row'} gap='15px' alignContent='center' alignItems='center' justifyContent='start'>
 					
 					<StockIcon symbol={info.getValue()} height ='50px' width='50px' borderRadius='5px'/>
 

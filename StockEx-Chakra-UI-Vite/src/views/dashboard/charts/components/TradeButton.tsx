@@ -105,9 +105,10 @@ const StockButton: React.FC<StockButtonProps> = ({ text, stock, balance, prices 
     <>
       <Button
         color='light'
-        borderRadius="full"
+        borderRadius="15px"
         onClick={openModal}
-        padding="12px 20px"
+        padding="40px 35px"
+        fontSize='45px'
       >
         {text}
       </Button>

@@ -31,11 +31,11 @@ export default function MarketTable(props: {
          stock: row.stock,
          currentPrice: '$ ' + row.currentPrice.toFixed(2),
          priceDifference: row.priceDifference >= 0 ? 
-            [ '+ $ ' + row.priceDifference.toFixed(2),  '#1aba1a'] : 
-            ['- $ ' + (-1*row.priceDifference).toFixed(2), '#d62b2b'],
+            [ '+ $ ' + row.priceDifference.toFixed(2),  'rgb(0,245,0)'] : 
+            ['- $ ' + (-1*row.priceDifference).toFixed(2), 'rgb(245,0,0)'],
          percentDifference: row.percentDifference >= 0 ?
-            [ '+ ' + row.priceDifference.toFixed(2) + '%',  '#1aba1a'] : 
-            ['- ' + (-1*row.priceDifference).toFixed(2) + '%', '#d62b2b'],
+            [ '+ ' + row.priceDifference.toFixed(2) + '%',  'rgb(0,245,0)'] : 
+            ['- ' + (-1*row.priceDifference).toFixed(2) + '%', 'rgb(245,0,0)'],
          lastClosedPrice:  '$ ' +  row.lastClosedPrice.toFixed(2),
          volume: row.volume,
          trade: row.stock,

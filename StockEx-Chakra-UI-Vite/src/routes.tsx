@@ -1,5 +1,6 @@
 import { Icon } from '@chakra-ui/react';
 import { MdBarChart, MdPerson, MdHome, MdLock, MdOutlineShoppingCart } from 'react-icons/md';
+import { FaChartLine } from "react-icons/fa6";
 
 // Admin Imports
 import MainDashboard from './views/dashboard/default';
@@ -8,6 +9,7 @@ import Profile from './views/dashboard/profile';
 import DataTables from './views/dashboard/dataTables';
 import Portfolio from './views/dashboard/portfolio';
 import Market from './views/dashboard/market';
+import Charts from './views/dashboard/charts';
 
 import RTL from './views/dashboard/rtl';
 
@@ -41,7 +43,7 @@ const routes = [
 		name: 'Profile',
 		layout: '/dashboard',
 		path: '/profile',
-		icon: <Icon as={MdPerson} width='20px' height='20px' color='inherit' />,
+		icon: <Icon as={MdHome} width='20px' height='20px' color='inherit' />,
 		component: Profile,
 	},
 	// {
@@ -64,6 +66,14 @@ const routes = [
 		path: '/stock-market',
 		icon: <Icon as={MdOutlineShoppingCart} width='20px' height='20px' color='inherit' />,
 		component: Market,
+		secondary: true,
+	},
+	{
+		name: 'Stock Charts',
+		layout: '/dashboard',
+		path: '/charts',
+		icon: <Icon as={FaChartLine} width='20px' height='20px' color='inherit' />,
+		component: Charts,
 		secondary: true,
 	},
 

@@ -20,8 +20,8 @@ const MiniChart = ({ prices }) => {
       datasets: [
          {
          data: prices,
-         borderColor: prices[prices.length-1] >= prices[0] ? 'green' : 'red',
-         backgroundColor: prices[prices.length-1] >= prices[0] ? 'rgba(0, 255, 0, 0.2)' : 'rgba(255, 0, 0, 0.2)',
+         borderColor: prices[prices.length-1] >= prices[0] ? 'rgba(0, 255, 0, 1)' : 'rgba(255, 0, 0, 1)',
+         backgroundColor: prices[prices.length-1] >= prices[0] ? 'rgba(0, 255, 0, 0.35)' : 'rgba(255, 0, 0, 0.35)',
          fill: true,
          tension: 0.3,
          pointRadius: 0,
