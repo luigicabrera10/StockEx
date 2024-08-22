@@ -10,6 +10,7 @@ const Card = {
 		minWidth: '0px',
 		wordWrap: 'break-word',
 		bg: mode('#ffffff', 'navy.800')(props),
+		// bg: mode('#ffffff', '#172558')(props),
 		backgroundClip: 'border-box'
 	})
 };

@@ -1,5 +1,5 @@
 // Chakra imports
-import { Text, useColorModeValue } from '@chakra-ui/react';
+import { Text, useColorModeValue, Box } from '@chakra-ui/react';
 // Assets
 import Project1 from '../../../../assets/images/profile/Project1.png';
 import Project2 from '../../../../assets/images/profile/Project2.png';
@@ -17,8 +17,9 @@ export default function Projects(props: { [x: string]: any, trades: any[] }) {
 	const textColorSecondary = 'gray.400';
 	const cardShadow = useColorModeValue('0px 18px 40px rgba(112, 144, 176, 0.12)', 'unset');
 	return (
-		<Card mb={{ base: '0px', '2xl': '5px' }} {...rest}>
-			<Text color={textColorPrimary} fontWeight='bold' fontSize='2xl' mt='10px' mb='4px'>
+		<Card height='calc(100% - 11px)' {...rest}>
+			<Box> 
+			<Text color={textColorPrimary} fontWeight='bold' fontSize='2xl' mt='10px' >
 				Your Top Trades
 			</Text>
 			<Text color={textColorSecondary} fontSize='19px' me='26px' mb='20px'>
@@ -29,7 +30,7 @@ export default function Projects(props: { [x: string]: any, trades: any[] }) {
 				return <Project
 					ranking={index + 1}
 					operation={op}
-					mb={index + 1 == 3 ? '5px' : '18px'}
+					mb={index + 1 == 3 ? '0px' : '18px'}
 					boxShadow={cardShadow}
 				/>
 			})}
@@ -60,6 +61,7 @@ export default function Projects(props: { [x: string]: any, trades: any[] }) {
 				link='#'
 				title='Most essential tips for Burnout'
 			/> */}
+			</Box>
 		</Card>
 	);
 }

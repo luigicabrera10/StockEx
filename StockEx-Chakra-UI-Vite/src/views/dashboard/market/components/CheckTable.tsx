@@ -135,13 +135,22 @@ export default function CheckTable(props: { tableData: any, currencyPrices:any, 
 		columnHelper.accessor('priceDifference', {
 			id: 'priceDifference',
 			header: () => (
-				<Text
-					justifyContent='space-between'
-					align='center'
-					fontSize='16px'
-					color='gray.400'>
-					PRICE PROFIT
-				</Text>
+				<Box>
+					<Text
+						justifyContent='space-between'
+						align='center'
+						fontSize='16px'
+						color='gray.400'>
+						PRICE PROFIT
+					</Text>
+					<Text
+						justifyContent='space-between'
+						align='center'
+						fontSize='16px'
+						color='gray.400'>
+						(Daily)
+					</Text>
+				</Box>
 			),
 			cell: (info) => (
 				<Text color={info.getValue()[1]} fontSize='18px' fontWeight='700' textAlign="center">
@@ -152,13 +161,22 @@ export default function CheckTable(props: { tableData: any, currencyPrices:any, 
 		columnHelper.accessor('percentDifference', {
 			id: 'percentDifference',
 			header: () => (
-				<Text
-					justifyContent='space-between'
-					align='center'
-					fontSize='16px'
-					color='gray.400'>
-					PROFIT PERCENT
-				</Text>
+				<Box>
+					<Text
+						justifyContent='space-between'
+						align='center'
+						fontSize='16px'
+						color='gray.400'>
+						PROFIT PERCENT
+					</Text>
+					<Text
+						justifyContent='space-between'
+						align='center'
+						fontSize='16px'
+						color='gray.400'>
+						(Daily)
+					</Text>
+				</Box>
 			),
 			cell: (info) => (
 				<Text color={info.getValue()[1]} fontSize='18px' fontWeight='700' textAlign="center">
@@ -169,13 +187,22 @@ export default function CheckTable(props: { tableData: any, currencyPrices:any, 
 		columnHelper.accessor('chart', {
 			id: 'chart',
 			header: () => (
-				<Text
-					justifyContent='space-between'
-					align='center'
-					fontSize='16px'
-					color='gray.400'>
-					CHART
-				</Text>
+				<Box>
+					<Text
+						justifyContent='space-between'
+						align='center'
+						fontSize='16px'
+						color='gray.400'>
+						CHART
+					</Text>
+					<Text
+						justifyContent='space-between'
+						align='center'
+						fontSize='16px'
+						color='gray.400'>
+						(PAST 10 DAYS)
+					</Text>
+				</Box>
 			),
 			cell: (info) => (
 				<Box display='flex' justifyContent='center' alignContent='center'>

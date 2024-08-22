@@ -9,6 +9,7 @@ import { VSeparator } from '../../../../components/separator/Separator';
 import { useState, useEffect } from 'react';
 
 
+
 export default function Conversion(props: { [x: string]: any, data: any, labels: any }) {
 	const { labels} = props;
 	const { data} = props;
@@ -42,31 +43,13 @@ export default function Conversion(props: { [x: string]: any, data: any, labels:
 	}, [data, labels]); // Every time finalOperations changes
 
 
-	// 	const pieColors = [
-	// 		"#008000", "#000060", "#1F3F3F", "#20A0A0", "#2A3F60", "#008080", "#5A005A", "#5E92B1", "#404040", "#505050",
-	// 		"#D4605A", "#A0A0A0", "#A0C0C0", "#A6A6CA", "#A28266", "#B5BFBF", "#003200", "#A0C0C0", "#5E1F9A", "#505000",
-	// 		"#808080", "#007A5A", "#B53F4C", "#AFAFBF", "#1F3F3F", "#A6A6A6", "#B36EBE", "#7A4F4F", "#5D6A2F", "#A6A6A6",
-	// 		"#0F4A7F", "#7D6B47", "#4D6A21", "#005656", "#3A3A3A", "#43987A", "#5A5A5A", "#194019", "#24A0A0", "#591966",
-	// 		"#404040", "#606090", "#324B7D", "#505050", "#BF00BF", "#3F7F00", "#757567", "#00AFAF", "#5A0000", "#B54A8F"
-	//   ]
-	//   .slice(0, 0 +PieLabels.length);
-
-	const transparency = 0.7;
-	const pieColors = [
-		`rgba(67, 24, 255, ${transparency})`, `rgba(57, 184, 255, ${transparency})`, `rgba(50, 75, 125, ${transparency})`, `rgba(80, 80, 80, ${transparency})`, `rgba(191, 0, 191, ${transparency})`, `rgba(63, 127, 0, ${transparency})`, `rgba(117, 117, 103, ${transparency})`, 
-		`rgba(0, 175, 175, ${transparency})`, `rgba(90, 0, 0, ${transparency})`, `rgba(0, 128, 0, ${transparency})`, `rgba(0, 0, 96, ${transparency})`, `rgba(31, 63, 63, ${transparency})`, 
-		`rgba(32, 160, 160, ${transparency})`, `rgba(42, 63, 96, ${transparency})`, `rgba(0, 128, 128, ${transparency})`, `rgba(90, 0, 90, ${transparency})`, `rgba(94, 146, 177, ${transparency})`, 
-		`rgba(64, 64, 64, ${transparency})`, `rgba(80, 80, 80, ${transparency})`, `rgba(212, 96, 90, ${transparency})`, `rgba(160, 160, 160, ${transparency})`, `rgba(160, 192, 192, ${transparency})`, 
-		`rgba(166, 166, 202, ${transparency})`, `rgba(162, 130, 102, ${transparency})`, `rgba(181, 191, 191, ${transparency})`, `rgba(0, 50, 0, ${transparency})`, `rgba(160, 192, 192, ${transparency})`, 
-		`rgba(94, 31, 154, ${transparency})`, `rgba(80, 80, 0, ${transparency})`, `rgba(128, 128, 128, ${transparency})`, `rgba(0, 122, 90, ${transparency})`, `rgba(181, 63, 76, ${transparency})`, 
-		`rgba(175, 175, 191, ${transparency})`, `rgba(31, 63, 63, ${transparency})`, `rgba(166, 166, 166, ${transparency})`, `rgba(179, 110, 190, ${transparency})`, `rgba(122, 79, 79, ${transparency})`,
-		`rgba(93, 106, 47, ${transparency})`, `rgba(166, 166, 166, ${transparency})`, `rgba(15, 74, 127, ${transparency})`, `rgba(125, 107, 71, ${transparency})`, `rgba(77, 106, 33, ${transparency})`, 
-		`rgba(0, 86, 86, ${transparency})`, `rgba(58, 58, 58, ${transparency})`, `rgba(67, 152, 122, ${transparency})`, `rgba(90, 90, 90, ${transparency})`, `rgba(25, 64, 25, ${transparency})`, 
-		`rgba(36, 160, 160, ${transparency})`, `rgba(89, 25, 102, ${transparency})`, `rgba(64, 64, 64, ${transparency})`, `rgba(96, 96, 144, ${transparency})`, `rgba(50, 75, 125, ${transparency})`, 
-		`rgba(80, 80, 80, ${transparency})`, `rgba(191, 0, 191, ${transparency})`, `rgba(63, 127, 0, ${transparency})`, `rgba(117, 117, 103, ${transparency})`, `rgba(0, 175, 175, ${transparency})`, 
-		`rgba(90, 0, 0, ${transparency})`, `rgba(181, 74, 143, ${transparency})`
-	]
-	.slice(0, 0 +PieLabels.length);
+	const pieColors: string[] = [
+		"#4318FF", "#6AD2FF", "#EFF4FB","#02FDBF","#BA44CE", "#0046C2", "#02FF63", "#FF16A9",  "#01B4FE", "#FD7A03",  
+		"#F40FA1","#DA2FF6","#A900FF","#E7FF08", "#FA00FF", "#FF4003","#F477DA","#C7F800", "#FEBE00","#F40241",
+		"#02FFFE","#00C0FF","#B431FF","#05FF00","#C7F800","#1E90FF","#7DF9FF","#01F9C6","#00FA9A","#FF2400", 
+		"#FF4500", "#9B00FF", "#006FFF","#3FFF01","#F40FA1", "#61DCEC", "#F678B2","#95F5B0", "#06EAB2","#008000",
+		"#000060","#1F3F3F","#20A0A0", "#2A3F60","#008080","#5A005A","#5E92B1","#404040","#505050","#D4605A",
+	 ]
 
 
 	const pieChartOptions: any = {
@@ -105,6 +88,10 @@ export default function Conversion(props: { [x: string]: any, data: any, labels:
 		fill: {
 			colors: pieColors
 		},
+		stroke: {
+			show: true,
+			width: 0 // Set the width to 0 to remove borders
+	  },
 		tooltip: {
 			enabled: true,
 			theme: 'dark'

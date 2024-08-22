@@ -30,17 +30,19 @@ export default function Project(props: {
 	const textColorPrimary = useColorModeValue('secondaryGray.900', 'white');
 	const textColorSecondary = 'gray.400';
 	const brandColor = useColorModeValue('brand.500', 'white');
-	const bg = useColorModeValue('white', 'navy.700');
+	const bg = useColorModeValue('white', 'navy.800');
+	// const bg = '#2D3F8E';
+	// const borderColor = useColorModeValue('white', 'navy.50');
 	
 	return (
-		<Card bg={bg} mb={mb} {...rest} p='14px'>
+		<Card bg={bg}  mb={mb}  {...rest} p='14px'>
 			<Flex align='center' gap='20px' direction={{ base: 'column', md: 'row' }} alignContent='center'>
 				{/* <Image h='80px' w='80px' src={image} borderRadius='8px' me='20px' /> */}
 
 				<StockIcon symbol={operation.tickerSymbol} height ='80px' width='80px' borderRadius='12px'/>
 
 				<Box mt={{ base: '10px', md: '0' }}>
-					<Text color={textColorPrimary} fontWeight='500' fontSize='md' mb='4px'>
+					<Text color={textColorPrimary} fontWeight='500' fontSize='md' mb='2px'>
 						{operation.tickerSymbol}
 					</Text>
 					<Text fontWeight='500' color={textColorSecondary} fontSize='18px' me='4px'>
@@ -52,7 +54,7 @@ export default function Project(props: {
 							{'Investment: $ ' + (operation.investment / decimalConst).toFixed(2) + '    ' }
 						</Text>
 						<Box marginX={'4px'}></Box>
-						<Text color={brandColor} fontSize='18px' textColor={operation.profit >= 0 ? 'green' : 'red'}>
+						<Text color={brandColor} fontSize='18px' textColor={operation.profit >= 0 ? 'rgb(0,255,0)' : 'rgb(255,0,0)'}>
 							{operation.profit >= 0 ? '   +   $ ' + (operation.profit / decimalConst).toFixed(2) : '   -   $' + (-1 * operation.profit / decimalConst).toFixed(2)}  
 							{'  (' + (operation.profit >= 0 ? ' + ' : ' - ') + (100 *Math.abs(operation.profit) / operation.investment).toFixed(2) + ' % )'}
 						</Text>

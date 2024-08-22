@@ -11,6 +11,7 @@ import { RiArrowUpSFill } from 'react-icons/ri';
 
 
 function transformData(data) {
+	// return data.map(value => Math.log10(value + 1)); // Add 1 to avoid log(0)
 	return data.map(value => Math.log10(value + 1)); // Add 1 to avoid log(0)
 }
 

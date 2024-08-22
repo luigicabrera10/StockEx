@@ -321,7 +321,7 @@ export default function UserReports() {
 
 						</Flex>
 
-						<StockButton text="Trade Now!" stock={SelectedStock} balance={varaBalance} prices={CurrencyPrices} />
+						<StockButton text="Trade Now!" stock={SelectedStock} balance={parseFloat(formattedBalance.value)} prices={CurrencyPrices} />
 					</Flex>
 
 

@@ -149,7 +149,7 @@ export default function Overview() {
 	const varaBalance = parseFloat(formattedBalance.value).toFixed(2);
 
 	// LineChart:
-	const [LineChartData, setLineChartData] = useState([ 0.50, 0.64, 0.48, 0.66, 0.49, 0.68, 0.56, 0.48, 0.53, 0.75 ]);
+	const [LineChartData, setLineChartData] = useState([ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ]);
 	const [LineChartLabels, setLineChartLabels] = useState(['MON', 'TUS', 'WED', 'THU', 'FRI', 'MON', 'TUS', 'WED', 'THU', 'FRI']);
 	const [TotalBalance, setTotalBalance] = useState(parseFloat(formattedBalance.value));
 	const [ProfitPercent, setProfitPercent] = useState(0.0);
@@ -205,13 +205,13 @@ export default function Overview() {
 			setActiveOperations(activeOp);
 
 			setPieChartData({
-				'stock': Object.keys(pieChartInvestment).map(key => pieChartInvestment[key] / decimalConst),
+				'stock': Object.keys(pieChartInvestment).sort().map(key => pieChartInvestment[key] / decimalConst),
 				'state': [activeOp, data.allOperations.length - activeOp],
 				'type': pieChartType
 			});
 
 			setPieChartLabels({
-				'stock': Object.keys(pieChartInvestment).map(key => key),
+				'stock': Object.keys(pieChartInvestment).sort().map(key => key),
 				'state': ['Active', 'Closed'],
 				'type': ['Buy', 'Sell']
 			});
@@ -272,7 +272,7 @@ export default function Overview() {
 				}
 			});
 
-			investedStocks.forEach( stock => {
+			investedStocks.sort().forEach( stock => {
 				barsChartData.push(HistoricalPrices[stock][0].volume);
 			});
 
@@ -365,13 +365,14 @@ export default function Overview() {
 			setLineChartData(profitArray.reverse());
 			setLineChartLabels(datesArray.reverse());
 
-			setTotalBalance((dailyProfit / decimalConst) + (totalInvested / decimalConst));
+			// setTotalBalance((dailyProfit / decimalConst) + (totalInvested / decimalConst));
+			setTotalBalance((dailyProfit / decimalConst) );
 
 			setProfitPercent(100 * dailyProfit / totalInvested);
 
 		}
 
-	}, [HistoricalPrices, data, stock_prices, formattedBalance]); // Every time finalOperations changes
+	}, [HistoricalPrices, data, stock_prices]); // Every time finalOperations changes
 
 
 	console.log("BarChartData: ", BarChartData);
@@ -393,7 +394,7 @@ export default function Overview() {
 					base: 'repeat(3, 1fr)',
 					lg: '1fr'
 				}}
-				gap={{ base: '35px', xl: '35px' }}
+				gap={{ base: '25px', xl: '25px' }}
 			>
 
 				<Banner
@@ -438,13 +439,13 @@ export default function Overview() {
 			<Grid
 				templateColumns={{
 					base: '1fr',
-					lg: '1fr 2.071fr'
+					lg: '1fr 2.05fr'
 				}}
-				templateRows={{
-					base: 'repeat(3, 1fr)',
-					lg: '1fr'
-				}}
-				gap={{ base: '35px', xl: '35px' }}
+				// templateRows={{
+				// 	base: 'repeat(2, 0.5fr)',
+				// 	lg: '0.5fr'
+				// }}
+				gap={{ base: '25px', xl: '25px' }}
 			>
 				<Projects
 					banner={banner}

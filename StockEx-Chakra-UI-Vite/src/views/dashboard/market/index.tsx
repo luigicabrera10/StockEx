@@ -35,6 +35,9 @@ import { web3Enable, web3Accounts } from '@polkadot/extension-dapp';
 import {getHexAdress} from '../../../utils/getHexAdress';
 import { useApi, useAccount, useBalance, useBalanceFormat } from '@gear-js/react-hooks';
 
+import SearchBar from '../../../components/searchBar/SearchBar';
+
+
 
 
 const useRealTimeStockPrices = () => {
@@ -160,7 +163,7 @@ export default function UserReports() {
 	const currencyBalance = !CurrencyLoading ? 
 	'$ ' + exchange('VARA', SelectedCurrency, parseFloat(parseFloat(formattedBalance.value).toFixed(2)), CurrencyPrices).toFixed(2) : '$0.0' ;
 
-
+	const [SearchFilter, setSearchFilter] = useState<string>('');
 	
 	// Wallet
 	useEffect(() => {
@@ -192,7 +195,6 @@ export default function UserReports() {
 
 	// Change the account
 	let accountHexa: string = getHexAdress();
-
 
 	// Real data
 	const supportedStocks = SupportedStocks();
@@ -232,6 +234,12 @@ export default function UserReports() {
 	
 	console.log("tableData: ", tableData);
 
+
+	const handleSearchChange = (value) => {
+		console.log('Search Value: ', value);
+		setSearchFilter(value);
+	} 
+
 	return (
 		<Box pt={{ base: '130px', md: '80px', xl: '80px' }}>
 			
@@ -245,10 +253,13 @@ export default function UserReports() {
 			
 			<SimpleGrid columns={{ base: 1, md: 1, xl: 1 }} gap='20px' mb='20px' alignContent='start'>
 
+				<SearchBar onChange={handleSearchChange} />
+
 				<MarketTable 
 					tableData={tableData} 
 					currencyPrices = {CurrencyLoading ? null : CurrencyPrices}
 					historicalPrices = {HistoricalLoading ? null : HistoricalPrices}
+					filterValue={SearchFilter}
 				/>
 				
 			</SimpleGrid>

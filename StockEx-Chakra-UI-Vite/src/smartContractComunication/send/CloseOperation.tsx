@@ -2,8 +2,9 @@
 import { useAccount, useApi, useAlert } from "@gear-js/react-hooks";
 import { web3FromSource } from "@polkadot/extension-dapp";
 import { ProgramMetadata } from "@gear-js/api";
-import { Button } from "@gear-js/ui";
+// import { Button } from "@gear-js/ui";
 import { Flex } from "@chakra-ui/react";
+import {Button} from '@chakra-ui/react';
 
 function CloseOperation({ operationId }) {
 
@@ -66,7 +67,22 @@ function CloseOperation({ operationId }) {
    };
 
    return <Flex align='center' justifyContent='center'> 
-         <Button text="Close Now" onClick={signer} color='light' size="medium" style={{fontSize: '17px' }}/> 
+         <Button 
+            onClick={signer} 
+            // size="medium" 
+
+            padding="22px 17px"
+            fontSize='21px'
+
+            color='light'
+            border='2px'
+            borderColor='#02FDBF'
+            borderRadius="18px"
+
+            _hover={{ bg: '#20c9a0' }}
+         >
+            Close Now
+         </Button>
       </Flex>;
 }
 

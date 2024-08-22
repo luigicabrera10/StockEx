@@ -70,7 +70,22 @@ function OpenOperation({ stock, investment, type, leverage, isDisable }) {
    };
 
    return <Flex align='center' justifyContent='center'> 
-         <Button onClick={signer} borderRadius="full" paddingX="25px" paddingY='25px' fontSize='23px' isDisabled={isDisable}>Invest Now!</Button>
+         <Button
+            onClick={signer}
+            borderRadius="full"
+            paddingX="25px"
+            paddingY='25px'
+            fontSize='25px'
+            isDisabled={isDisable}
+
+            color='light'
+            border='2px'
+            borderColor='#02FDBF'
+
+            _hover={{ bg: '#20c9a0' }}
+         >
+            Invest Now!
+         </Button>
       </Flex>;
 }
 

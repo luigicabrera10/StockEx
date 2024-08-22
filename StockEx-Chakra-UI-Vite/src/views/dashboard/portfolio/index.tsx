@@ -570,7 +570,8 @@ export default function UserReports() {
 						<IconBox
 							w='56px'
 							h='56px'
-							bg={boxBg}
+							// bg={boxBg}
+							bg='linear-gradient(90deg, #4481EB 0%, #04BEFE 100%)'
 							icon={<Icon w='32px' h='32px' as={MdAttachMoney} color={brandColor} />}
 						/>
 					}
@@ -594,7 +595,8 @@ export default function UserReports() {
 						<IconBox
 							w='56px'
 							h='56px'
-							bg={boxBg}
+							// bg={boxBg}
+							bg='linear-gradient(90deg, #4481EB 0%, #04BEFE 100%)'
 							icon={<Icon w='32px' h='32px' as={FaChartLine} color={brandColor} />}
 						/>
 					}
@@ -618,7 +620,8 @@ export default function UserReports() {
 						<IconBox
 							w='56px'
 							h='56px'
-							bg={boxBg}
+							// bg={boxBg}
+							bg='linear-gradient(90deg, #4481EB 0%, #04BEFE 100%)'
 							icon={<Icon w='32px' h='32px' as={GiProfit} color={brandColor} />}
 						/>
 					} 
@@ -642,8 +645,8 @@ export default function UserReports() {
 						<IconBox
 							w='56px'
 							h='56px'
-							// bg='linear-gradient(90deg, #4481EB 0%, #04BEFE 100%)'
-							bg={boxBg}
+							bg='linear-gradient(90deg, #4481EB 0%, #04BEFE 100%)'
+							// bg={boxBg}
 
 							icon={<Icon w='28px' h='28px' as={MdBarChart} color='white' />}
 						/>
@@ -666,7 +669,8 @@ export default function UserReports() {
 						<IconBox
 							w='56px'
 							h='56px'
-							bg={boxBg}
+							// bg={boxBg}
+							bg='linear-gradient(90deg, #4481EB 0%, #04BEFE 100%)'
 							icon={<Icon w='32px' h='32px' as={MdAddTask} color={brandColor} />}
 						/>
 					}
@@ -715,18 +719,18 @@ export default function UserReports() {
 				
 				<SimpleGrid columns={{ base: 1, md: 1, xl: 1 }} gap='20px' mb='20px' alignContent='start'>
 
-					<Box margin='0px'>
-					</Box>
+					{/* <Box margin='0px'>
+					</Box> */}
 
-					<Box>
+					{/* <Box>
 						<CloseAllOperations/>
 					</Box>
 
-					<HSeparator mb='0px' />
+					<HSeparator mb='0px' /> */}
 
 					
 
-					<Box>
+					<Box mt='10px'>
 						<FormLabel fontWeight="bold" fontSize='20px' >Operation State</FormLabel>
 						<Select id='op_state' variant='mini'mt='5px' me='0px' defaultValue={'all'} onChange={handleOperationStateChange}>
 							<option value='all'>Any State</option>

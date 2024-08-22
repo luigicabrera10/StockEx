@@ -9,6 +9,7 @@ import { MdBarChart, MdOutlineCalendarToday } from 'react-icons/md';
 import { RiArrowUpSFill } from 'react-icons/ri';
 import { RiArrowDownSFill } from 'react-icons/ri';
 // import { lineChartDataTotalSpent, lineChartOptionsTotalSpent } from '../../../../variables/charts';
+import ReactApexChart from 'react-apexcharts';
 
 export default function TotalSpent(props: { [x: string]: any, data:number[], labels:string[], finalBalance:number, percent:number}) {
 	const { data } = props;
@@ -23,90 +24,77 @@ export default function TotalSpent(props: { [x: string]: any, data:number[], lab
 	const lineChartDataTotalSpent = [
 		{
 			name: 'Profit per Day',
-			data: data
+			data: data,
 		},
-		// {
-		// 	name: 'Profit',
-		// 	data: [ 30, 40, 24, 46, 20, 46, 55, 60, 45, 42 ]
-		// 	// data: [ 3, 4, 2, 0, 1, 2 ]
-		// }
+
 	];
 
-	const lineChartOptionsTotalSpent: any = {
+	const chartOptions = {
 		chart: {
-			toolbar: {
-				show: false
-			},
-			dropShadow: {
-				enabled: true,
-				top: 13,
-				left: 0,
-				blur: 10,
-				opacity: 0.1,
-				color: '#4318FF'
-			}
-		},
-		// colors: [ '#4318FF', '#39B8FF' ],
-		colors: [ '#39B8FF' ],
-		markers: {
-			size: 0,
-			colors: 'white',
-			strokeColors: '#7551FF',
-			strokeWidth: 3,
-			strokeOpacity: 0.9,
-			strokeDashArray: 0,
-			fillOpacity: 1,
-			discrete: [],
-			shape: 'circle',
-			radius: 2,
-			offsetX: 0,
-			offsetY: 0,
-			showNullDataPoints: true
-		},
-		tooltip: {
-			theme: 'dark',
-			enable: true,
-		},
-		dataLabels: {
-			enabled: false
+		  type: 'area',
+		  height: '100%',
+		  toolbar: {
+			 show: false,
+		  },
 		},
 		stroke: {
-			curve: 'smooth',
-			type: 'line'
+		  curve: 'smooth',
+		  width: 3,
+		},
+		fill: {
+		  type: 'gradient',
+		  gradient: {
+			// type: "vertical",
+			 shadeIntensity: 1,
+			 opacityFrom: 0.74,
+			 opacityTo: 0.4,
+			 stops: [0, 100],
+		  },
+		},
+		colors: ['#00E396'], // Line color
+		dataLabels: {
+			enabled: true
 		},
 		xaxis: {
-			type: 'numeric',
-			categories: labels,
-			labels: {
-				style: {
-					colors: '#A3AED0',
-					fontSize: '12px',
-					fontWeight: '500'
-				}
-			},
-			axisBorder: {
-				show: false
-			},
-			axisTicks: {
-				show: false
-			}
+		  categories: labels,
+		  labels: {
+			 style: {
+				colors: '#FFFFFF',  // Color for x-axis labels
+				fontSize: '12px',
+			 },
+		  },
+		  axisBorder: {
+			 color: '#FFFFFF',  // Color for x-axis border
+		  },
 		},
 		yaxis: {
-			show: false
-		},
-		legend: {
-			show: false
+		  labels: {
+			 style: {
+				colors: '#FFFFFF',  // Color for y-axis labels
+				fontSize: '12px',
+			 },
+		  },
+		  axisBorder: {
+			 color: '#FFFFFF',  // Color for y-axis border
+		  },
 		},
 		grid: {
-			show: false,
-			column: {
-				color: [ '#39B8FF' ],
-				opacity: 0.8
-			}
+		  borderColor: '#404040',  // Grid line color
 		},
-		color: [ '#39B8FF' ]
-	};
-	
+		tooltip: {
+		  theme: 'dark',  // Tooltip theme
+		},
+
+	 };
+  
+	//  const chartSeries = [{
+	// 	name: 'Earnings',
+	// 	data: values,
+	//  }];
+	 
+	 
+	 
+	 
 
 	// Chakra Color Mode
 
@@ -118,7 +106,7 @@ export default function TotalSpent(props: { [x: string]: any, data:number[], lab
 	const bgHover = useColorModeValue({ bg: 'secondaryGray.400' }, { bg: 'whiteAlpha.50' });
 	const bgFocus = useColorModeValue({ bg: 'secondaryGray.300' }, { bg: 'whiteAlpha.100' });
 	return (
-		<Card justifyContent='center' alignItems='center' flexDirection='column' w='100%' h='calc(100% - 6px)' mb='0px' {...rest}>
+		<Card justifyContent='center' alignItems='center' flexDirection='column' w='100%' h='calc(100% - 12px)' mb='0px' {...rest}>
 			{/* <Flex align='center' justify='space-around' w='100%' pe='20px' pt='5px'>
 				<Button bg={boxBg} fontSize='sm' fontWeight='500' color={textColorSecondary} borderRadius='7px'>
 					<Icon as={MdOutlineCalendarToday} color={textColorSecondary} me='4px' />
@@ -143,10 +131,10 @@ export default function TotalSpent(props: { [x: string]: any, data:number[], lab
 			<Flex w='100%' height='100%' flexDirection='column' >
 
 				<Flex flexDirection='column' me='20px' mt='10px' ml='10px'>
-					<Text color={textColor} fontSize='33px' textAlign='start' fontWeight='700' lineHeight='100%'>
+					<Text color={textColor} fontSize='28px' textAlign='start' fontWeight='700' lineHeight='100%'>
 						{'Investment return: $ ' + finalBalance.toFixed(2)}
 					</Text>
-					<Flex align='center' mb='20px'>
+					<Flex align='center' >
 						<Text color='secondaryGray.600' fontSize='18px' fontWeight='500' mt='4px' me='12px'>
 							{'Profit from current investments: '}
 						</Text>
@@ -170,8 +158,14 @@ export default function TotalSpent(props: { [x: string]: any, data:number[], lab
 
 				</Flex>
 
-				<Box height='100%' minH='260px' minW='75%' mb='15px' marginX='15px'>
-					<LineChart chartData={lineChartDataTotalSpent} chartOptions={lineChartOptionsTotalSpent} />
+				<Box height='100%' minH='280px' minW='75%'  >
+					{/* <LineChart chartData={lineChartDataTotalSpent} chartOptions={lineChartOptionsTotalSpent} /> */}
+					<ReactApexChart
+						options={chartOptions}
+						series={lineChartDataTotalSpent}
+						type="area"
+						height="395"
+					/>
 				</Box>
 
 			</Flex>
