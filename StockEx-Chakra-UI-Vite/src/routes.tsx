@@ -17,13 +17,13 @@ import RTL from './views/dashboard/rtl';
 import SignInCentered from './views/home/signIn';
 
 const routes = [
-	{
-		name: 'Main Dashboard',
-		layout: '/dashboard',
-		path: '/default',
-		icon: <Icon as={MdHome} width='20px' height='20px' color='inherit' />,
-		component: MainDashboard,
-	},
+	// {
+	// 	name: 'Main Dashboard',
+	// 	layout: '/dashboard',
+	// 	path: '/default',
+	// 	icon: <Icon as={MdHome} width='20px' height='20px' color='inherit' />,
+	// 	component: MainDashboard,
+	// },
 	// {
 	// 	name: 'NFT Marketplace',
 	// 	layout: '/dashboard',

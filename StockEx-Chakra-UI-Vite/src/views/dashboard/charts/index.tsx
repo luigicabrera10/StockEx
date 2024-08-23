@@ -121,7 +121,7 @@ function exchange(currency1:string, currency2:string, value, prices) {
 
 
 
-export default function UserReports() {
+export default function UserReports( ) {
 
 	// Chakra Color Mode
 	const brandColor = useColorModeValue('brand.500', 'white');

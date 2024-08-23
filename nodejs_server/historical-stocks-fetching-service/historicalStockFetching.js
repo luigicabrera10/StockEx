@@ -47,7 +47,7 @@ const savedHistoricalStockPricesFolder = '/home/northsoldier/Documents/Hackathon
 const previewHistoricalPricesFile = '/home/northsoldier/Documents/Hackathons/Varathon - StockEx/StockEx-Chakra-UI-Vite/public/DataBase/HistoricalStockPrices/preview.json';
 
 const preview_size = 10;
-const updateRateHistoricalStocks = 24 * 60 * 60 * 1000;
+const updateRateHistoricalStocks = 6 * 60 * 60 * 1000;
 
 
 async function setHistoricalStockApiKey() {

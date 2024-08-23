@@ -21,71 +21,153 @@ export default function TotalSpent(props: { [x: string]: any, data:number[], lab
 
 
 
+	// const lineChartDataTotalSpent = [
+	// 	{
+	// 		name: 'Profit per Day',
+	// 		data: data,
+	// 	},
+
+	// ];
+
+	// const chartOptions = {
+	// 	chart: {
+	// 	  type: 'area',
+	// 	  height: '100%',
+	// 	  toolbar: {
+	// 		 show: false,
+	// 	  },
+	// 	},
+	// 	stroke: {
+	// 	  curve: 'smooth',
+	// 	  width: 3,
+	// 	},
+	// 	fill: {
+	// 	  type: 'gradient',
+	// 	  gradient: {
+	// 		// type: "vertical",
+	// 		 shadeIntensity: 1,
+	// 		 opacityFrom: 0.74,
+	// 		 opacityTo: 0.4,
+	// 		 stops: [0, 100],
+	// 	  },
+	// 	},
+	// 	colors: ['#00E396'], // Line color
+	// 	dataLabels: {
+	// 		enabled: true
+	// 	},
+	// 	xaxis: {
+	// 	  categories: labels,
+	// 	  labels: {
+	// 		 style: {
+	// 			colors: '#FFFFFF',  // Color for x-axis labels
+	// 			fontSize: '12px',
+	// 		 },
+	// 	  },
+	// 	  axisBorder: {
+	// 		 color: '#FFFFFF',  // Color for x-axis border
+	// 	  },
+	// 	},
+	// 	yaxis: {
+	// 	  labels: {
+	// 		 style: {
+	// 			colors: '#FFFFFF',  // Color for y-axis labels
+	// 			fontSize: '12px',
+	// 		 },
+	// 	  },
+	// 	  axisBorder: {
+	// 		 color: '#FFFFFF',  // Color for y-axis border
+	// 	  },
+	// 	},
+	// 	grid: {
+	// 	  borderColor: '#404040',  // Grid line color
+	// 	},
+	// 	tooltip: {
+	// 	  theme: 'dark',  // Tooltip theme
+	// 	},
+
+	//  };
+
+
+
+	const minValue = Math.min(...data);
+
+	// Shift the data upwards
+	const adjustedData = data.map((value) => value - minValue);
+
+	const chartOptions = {
+	chart: {
+		type: 'area',
+		height: '100%',
+		toolbar: {
+			show: false,
+		},
+	},
+	stroke: {
+		curve: 'smooth',
+		width: 3,
+	},
+	fill: {
+		type: 'gradient',
+		gradient: {
+			shadeIntensity: 1,
+			opacityFrom: 0.7,
+			opacityTo: 0.2,
+			stops: [0, 100],
+		},
+	},
+	colors: ['#00E396'], // Line color
+	dataLabels: {
+		enabled: true,
+		formatter: (val) => (val + minValue).toFixed(2), // Adjust the label to show original value
+	},
+	xaxis: {
+		categories: labels,
+		labels: {
+			style: {
+			colors: '#FFFFFF', // Color for x-axis labels
+			fontSize: '12px',
+			},
+		},
+		axisBorder: {
+			color: '#FFFFFF', // Color for x-axis border
+		},
+	},
+	yaxis: {
+		labels: {
+			style: {
+			colors: '#FFFFFF', // Color for y-axis labels
+			fontSize: '12px',
+			},
+			formatter: (val) => (val + minValue).toFixed(2), // Adjust the y-axis to show original value
+		},
+		axisBorder: {
+			color: '#FFFFFF', // Color for y-axis border
+		},
+		
+	},
+	grid: {
+		borderColor: '#404040', // Grid line color
+	},
+	tooltip: {
+		theme: 'dark', // Tooltip theme
+		y: {
+			formatter: (val) => (val + minValue).toFixed(2), // Adjust the tooltip to show original value
+		},
+	},
+	};
+
 	const lineChartDataTotalSpent = [
 		{
 			name: 'Profit per Day',
-			data: data,
+			data: adjustedData,
 		},
-
 	];
 
-	const chartOptions = {
-		chart: {
-		  type: 'area',
-		  height: '100%',
-		  toolbar: {
-			 show: false,
-		  },
-		},
-		stroke: {
-		  curve: 'smooth',
-		  width: 3,
-		},
-		fill: {
-		  type: 'gradient',
-		  gradient: {
-			// type: "vertical",
-			 shadeIntensity: 1,
-			 opacityFrom: 0.74,
-			 opacityTo: 0.4,
-			 stops: [0, 100],
-		  },
-		},
-		colors: ['#00E396'], // Line color
-		dataLabels: {
-			enabled: true
-		},
-		xaxis: {
-		  categories: labels,
-		  labels: {
-			 style: {
-				colors: '#FFFFFF',  // Color for x-axis labels
-				fontSize: '12px',
-			 },
-		  },
-		  axisBorder: {
-			 color: '#FFFFFF',  // Color for x-axis border
-		  },
-		},
-		yaxis: {
-		  labels: {
-			 style: {
-				colors: '#FFFFFF',  // Color for y-axis labels
-				fontSize: '12px',
-			 },
-		  },
-		  axisBorder: {
-			 color: '#FFFFFF',  // Color for y-axis border
-		  },
-		},
-		grid: {
-		  borderColor: '#404040',  // Grid line color
-		},
-		tooltip: {
-		  theme: 'dark',  // Tooltip theme
-		},
+	 
+	 
 
-	 };
+
+
   
 	//  const chartSeries = [{
 	// 	name: 'Earnings',
@@ -132,11 +214,11 @@ export default function TotalSpent(props: { [x: string]: any, data:number[], lab
 
 				<Flex flexDirection='column' me='20px' mt='10px' ml='10px'>
 					<Text color={textColor} fontSize='28px' textAlign='start' fontWeight='700' lineHeight='100%'>
-						{'Investment return: $ ' + finalBalance.toFixed(2)}
+						{'Profit: $ ' + finalBalance.toFixed(2)}
 					</Text>
 					<Flex align='center' >
 						<Text color='secondaryGray.600' fontSize='18px' fontWeight='500' mt='4px' me='12px'>
-							{'Profit from current investments: '}
+							{'Profit Percent: '}
 						</Text>
 						<Flex align='center'>
 							{percent >= 0 ? 

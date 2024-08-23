@@ -43,13 +43,13 @@ export function SidebarLinks(props: {
 										<Flex w='100%' alignItems='center' justifyContent='center'>
 											<Box
 												color={activeRoute(route.path.toLowerCase()) ? activeIcon : textColor}
-												me='18px'>
+												me='18px' fontSize='25px'>
 												{route.icon}
 											</Box>
 											<Text
 												me='auto'
 												color={activeRoute(route.path.toLowerCase()) ? activeColor : textColor}
-												fontWeight={activeRoute(route.path.toLowerCase()) ? 'bold' : 'normal'} fontSize='18px'>
+												fontWeight={activeRoute(route.path.toLowerCase()) ? 'bold' : 'normal'} fontSize='22px'>
 												{route.name}
 											</Text>
 										</Flex>

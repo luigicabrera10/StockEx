@@ -110,9 +110,9 @@ export default function Dashboard(props: { [x: string]: any }) {
 							
 							
 						</Box>
-					<Box>
+					{/* <Box>
 						<Footer />
-					</Box>
+					</Box> */}
 				</Box>
 			</SidebarContext.Provider>
 		</Box>

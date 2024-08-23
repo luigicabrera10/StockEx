@@ -151,7 +151,8 @@ export default function Overview() {
 	// LineChart:
 	const [LineChartData, setLineChartData] = useState([ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ]);
 	const [LineChartLabels, setLineChartLabels] = useState(['MON', 'TUS', 'WED', 'THU', 'FRI', 'MON', 'TUS', 'WED', 'THU', 'FRI']);
-	const [TotalBalance, setTotalBalance] = useState(parseFloat(formattedBalance.value));
+	// const [TotalBalance, setTotalBalance] = useState(parseFloat(formattedBalance.value));
+	const [TotalBalance, setTotalBalance] = useState(0);
 	const [ProfitPercent, setProfitPercent] = useState(0.0);
 
 
@@ -368,7 +369,12 @@ export default function Overview() {
 			// setTotalBalance((dailyProfit / decimalConst) + (totalInvested / decimalConst));
 			setTotalBalance((dailyProfit / decimalConst) );
 
-			setProfitPercent(100 * dailyProfit / totalInvested);
+			if (totalInvested == 0) {
+				setProfitPercent(0.0);
+			}
+			else{
+				setProfitPercent(100 * dailyProfit / totalInvested);
+			}
 
 		}
 
