@@ -191,7 +191,8 @@ export default function UserReports() {
 	}, []);
 
 	// Change the account
-	let accountHexa: string = getHexAdress();
+	// let accountHexa: string = getHexAdress();
+	let accountHexa: string = account ? account.decodedAddress : '0x';
 
 
 

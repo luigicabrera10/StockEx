@@ -169,6 +169,8 @@ export default function Overview() {
 	let accountHexa: string = getHexAdress();
 
 
+	console.log("ACCOUNT: ", account)
+
 	const data = AllOperations(accountHexa);
 	console.log("AllOperations: ",  data);
 
@@ -336,7 +338,12 @@ export default function Overview() {
 			// const candle = candles[HistoricalPrices['TSLA'].length-1];
 			// const dayOfWeek = new Date(`${candle.datetime}T00:00:00Z`).toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' }).toUpperCase();
 			const dayOfWeek = new Date().toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' }).toUpperCase();
-			datesArray[0] = dayOfWeek; 
+			if (dayOfWeek === 'SAT' || dayOfWeek ==='SUN'){
+				datesArray[0] = 'FRI'
+			}
+			else{
+				datesArray[0] = dayOfWeek; 
+			}
 
 
 			// Calc profit from last day or current day:
@@ -408,7 +415,9 @@ export default function Overview() {
 					banner={banner}
 					avatar={
 						<Box mt='-43px'>
-							<Identicon value={account.address} className={buttonStyles.icon} theme="polkadot" size={70} />
+							{account && <Identicon value={account.address} className={buttonStyles.icon} theme="polkadot" size={70} /> }
+	
+							{/* <Identicon value={account.address} className={buttonStyles.icon} theme="polkadot" size={70} /> */}
 						</Box>
 					}
 					name={name}

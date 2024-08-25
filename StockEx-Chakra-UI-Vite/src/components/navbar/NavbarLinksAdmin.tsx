@@ -263,7 +263,15 @@ export default function HeaderLinks(props: { secondary: boolean }) {
 				
 			</Menu> */}
 
-			<AccountButtonNavBar address={account.address} name={account.meta.name} onClick={openModal} />
+
+			{account ? (
+				<AccountButtonNavBar address={account.address} name={account.meta.name} onClick={openModal} />
+			) : (
+				// <Button  text="Sign in" onClick={openModal} />
+				<Button onClick={openModal} > Sign in </Button>
+			)}
+
+			{/* <AccountButtonNavBar address={account.address} name={account.meta.name} onClick={openModal} /> */}
 			{isModalOpen && <AccountsModal accounts={accounts} close={closeModal} />}
 
 			<Box marginLeft='10px'></Box>
