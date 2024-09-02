@@ -4,7 +4,7 @@
 
 ## Overview
 
-This smart contract is designed for managing stock trading operations on the VARa blockchain. It enables users to buy and sell stocks using VARa crypto, interact with a provider contract to fetch stock and currency prices, and manage the state of these operations.
+This smart contract is designed for managing stock trading operations on the Vara blockchain. It enables users to buy and sell stocks using Vara crypto, interact with a provider contract to fetch stock and currency prices, and manage the state of these operations.
 
 <br>
 
